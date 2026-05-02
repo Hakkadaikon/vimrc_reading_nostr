@@ -1,0 +1,41 @@
+/**
+ * @vitest-environment jsdom
+ */
+import { describe, expect, it } from "vitest";
+import { renderMarkdown } from "./markdown";
+
+describe("renderMarkdown", () => {
+	it("プレーンテキストをpタグで囲む", () => {
+		const result = renderMarkdown("Hello");
+		expect(result).toContain("Hello");
+		expect(result).toContain("<p>");
+	});
+
+	it("Markdownの太字をstrongタグに変換する", () => {
+		const result = renderMarkdown("**bold**");
+		expect(result).toContain("<strong>bold</strong>");
+	});
+
+	it("インラインコードをcodeタグに変換する", () => {
+		const result = renderMarkdown("`code`");
+		expect(result).toContain("<code>code</code>");
+	});
+
+	it("コードブロックをpreとcodeタグに変換する", () => {
+		const result = renderMarkdown("```vim\nset number\n```");
+		expect(result).toContain("<pre>");
+		expect(result).toContain("<code");
+		expect(result).toContain("set number");
+	});
+
+	it("scriptタグをサニタイズする", () => {
+		const result = renderMarkdown('<script>alert("xss")</script>');
+		expect(result).not.toContain("<script>");
+	});
+
+	it("リンクを変換する", () => {
+		const result = renderMarkdown("[link](https://example.com)");
+		expect(result).toContain('href="https://example.com"');
+		expect(result).toContain("link");
+	});
+});
