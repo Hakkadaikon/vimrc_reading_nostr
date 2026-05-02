@@ -9,6 +9,9 @@ import { defineConfig } from "vite";
 const config = defineConfig({
 	resolve: { tsconfigPaths: true },
 	plugins: [devtools(), tailwindcss(), tanstackStart(), viteReact()],
+	test: {
+		exclude: ["e2e/**", "node_modules/**"],
+	},
 });
 
 export default config;
