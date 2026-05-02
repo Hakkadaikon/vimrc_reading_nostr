@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { renderMarkdown } from "#/lib/markdown";
 import { encodeNevent } from "#/lib/nostr/nip19";
 import { useAuthStore } from "#/stores/auth-store";
@@ -27,7 +28,7 @@ export function MessageItem({
 	const isOwn = currentPubkey === message.pubkey;
 	const profile = getProfile(message.pubkey);
 	const displayName = getDisplayName(message.pubkey);
-	const nevent = encodeNevent(message.id);
+	const nevent = useMemo(() => encodeNevent(message.id), [message.id]);
 	const time = new Date(message.created_at * 1000);
 	const timeString = time.toLocaleString("ja-JP", {
 		month: "numeric",
@@ -35,6 +36,11 @@ export function MessageItem({
 		hour: "2-digit",
 		minute: "2-digit",
 	});
+
+	const html = useMemo(
+		() => renderMarkdown(message.content),
+		[message.content],
+	);
 
 	if (isDeleted) {
 		return (
@@ -46,8 +52,6 @@ export function MessageItem({
 			</div>
 		);
 	}
-
-	const html = renderMarkdown(message.content);
 
 	return (
 		<div

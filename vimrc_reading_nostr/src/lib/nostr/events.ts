@@ -1,5 +1,6 @@
 import type { EventTemplate, VerifiedEvent } from "nostr-tools/pure";
 import { verifyEvent as nostrVerifyEvent } from "nostr-tools/pure";
+import { nowUnix } from "./time";
 
 export type ChannelMessageParams = {
 	content: string;
@@ -13,7 +14,7 @@ export function createChannelMessageEvent(
 	return {
 		kind: 42,
 		content: params.content,
-		created_at: Math.floor(Date.now() / 1000),
+		created_at: nowUnix(),
 		tags: [["e", params.channelId, params.relayUrl ?? "", "root"]],
 	};
 }
@@ -31,7 +32,7 @@ export function createEditedMessageEvent(
 	return {
 		kind: 42,
 		content: params.content,
-		created_at: Math.floor(Date.now() / 1000),
+		created_at: nowUnix(),
 		tags: [
 			["e", params.channelId, params.relayUrl ?? "", "root"],
 			["e", params.originalEventId, params.relayUrl ?? ""],
@@ -43,9 +44,18 @@ export function createDeleteEvent(eventId: string): EventTemplate {
 	return {
 		kind: 5,
 		content: "",
-		created_at: Math.floor(Date.now() / 1000),
+		created_at: nowUnix(),
 		tags: [["e", eventId]],
 	};
+}
+
+export function getETag(tags: string[][]): string | null {
+	const tag = tags.find((t) => t[0] === "e");
+	return tag ? tag[1] : null;
+}
+
+export function getETags(tags: string[][]): string[] {
+	return tags.filter((t) => t[0] === "e").map((t) => t[1]);
 }
 
 export function verifyEvent(event: VerifiedEvent): boolean {

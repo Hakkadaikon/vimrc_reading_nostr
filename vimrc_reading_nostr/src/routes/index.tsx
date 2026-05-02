@@ -11,7 +11,11 @@ import { CHANNEL_ID, createChannelMessageFilter } from "#/lib/nostr/channel";
 import {
 	createChannelMessageEvent,
 	createDeleteEvent,
+	getETag,
+	getETags,
 } from "#/lib/nostr/events";
+import { parseProfileMetadata } from "#/lib/nostr/metadata";
+import { getNip07Provider } from "#/lib/nostr/nip07";
 import { decodeNevent } from "#/lib/nostr/nip19";
 import { createReactionEvent } from "#/lib/nostr/reactions";
 import { useAuthStore } from "#/stores/auth-store";
@@ -24,7 +28,7 @@ export const Route = createFileRoute("/")({ component: ChatPage });
 
 function ChatPage() {
 	const { publish, subscribe } = useRelayPool();
-	const isLoggedIn = useAuthStore((s) => s.isLoggedIn());
+	const isLoggedIn = useAuthStore((s) => s.publicKey !== null);
 	const publicKey = useAuthStore((s) => s.publicKey);
 	const secretKey = useAuthStore((s) => s.secretKey);
 	const loginMethod = useAuthStore((s) => s.loginMethod);
@@ -63,23 +67,16 @@ function ChatPage() {
 		);
 
 		const profileUnsub = subscribe([{ kinds: [0] }], (event: Event) => {
-			try {
-				const metadata = JSON.parse(event.content);
-				setProfile(event.pubkey, {
-					name: metadata.name,
-					picture: metadata.picture,
-					about: metadata.about,
-				});
-			} catch {
-				// invalid metadata
+			const profile = parseProfileMetadata(event.content);
+			if (profile) {
+				setProfile(event.pubkey, profile);
 			}
 		});
 
-		// リアクション購読（kind:7）
 		const reactionUnsub = subscribe([{ kinds: [7] }], (event: Event) => {
-			const eTag = event.tags.find((t) => t[0] === "e");
-			if (eTag) {
-				addReaction(eTag[1], {
+			const targetId = getETag(event.tags);
+			if (targetId) {
+				addReaction(targetId, {
 					id: event.id,
 					pubkey: event.pubkey,
 					content: event.content,
@@ -87,12 +84,9 @@ function ChatPage() {
 			}
 		});
 
-		// 削除イベント購読（kind:5）
 		const deleteUnsub = subscribe([{ kinds: [5] }], (event: Event) => {
-			for (const tag of event.tags) {
-				if (tag[0] === "e") {
-					deleteMessage(tag[1]);
-				}
+			for (const id of getETags(event.tags)) {
+				deleteMessage(id);
 			}
 		});
 
@@ -110,10 +104,9 @@ function ChatPage() {
 
 			let signedEvent: Event;
 			if (loginMethod === "nip07") {
-				const nostr = (window as unknown as Record<string, unknown>).nostr as {
-					signEvent: (event: unknown) => Promise<Event>;
-				};
-				signedEvent = await nostr.signEvent({
+				const provider = getNip07Provider();
+				if (!provider) return;
+				signedEvent = await provider.signEvent({
 					...template,
 					pubkey: publicKey,
 				});

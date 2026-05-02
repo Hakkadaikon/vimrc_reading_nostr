@@ -1,4 +1,5 @@
 import type { EventTemplate } from "nostr-tools/pure";
+import { nowUnix } from "./time";
 
 export type ReactionParams = {
 	targetEventId: string;
@@ -10,7 +11,7 @@ export function createReactionEvent(params: ReactionParams): EventTemplate {
 	return {
 		kind: 7,
 		content: params.content ?? "+",
-		created_at: Math.floor(Date.now() / 1000),
+		created_at: nowUnix(),
 		tags: [
 			["e", params.targetEventId],
 			["p", params.targetPubkey],

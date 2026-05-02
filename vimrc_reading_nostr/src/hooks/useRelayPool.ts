@@ -1,7 +1,7 @@
 import type { Event } from "nostr-tools/core";
 import type { Filter } from "nostr-tools/filter";
 import { Relay } from "nostr-tools/relay";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { getRelayUrls } from "#/lib/nostr/relay-config";
 import { useRelayStore } from "#/stores/relay-store";
 
@@ -24,54 +24,60 @@ export function useRelayPool() {
 	const attemptCountRef = useRef<Map<string, number>>(new Map());
 	const setStatus = useRelayStore((s) => s.setStatus);
 
-	const connectToRelay = async (url: string) => {
-		setStatus(url, "connecting");
-		try {
-			const relay = await Relay.connect(url);
-			const connection: RelayConnection = { relay, url };
-			connectionsRef.current = [
-				...connectionsRef.current.filter((c) => c.url !== url),
-				connection,
-			];
-			attemptCountRef.current.set(url, 0);
-			setStatus(url, "connected");
+	const connectToRelay = useCallback(
+		async (url: string) => {
+			setStatus(url, "connecting");
+			try {
+				const relay = await Relay.connect(url);
+				const connection: RelayConnection = { relay, url };
+				connectionsRef.current = [
+					...connectionsRef.current.filter((c) => c.url !== url),
+					connection,
+				];
+				attemptCountRef.current.set(url, 0);
+				setStatus(url, "connected");
 
-			relay.onclose = () => {
-				setStatus(url, "disconnected");
-				connectionsRef.current = connectionsRef.current.filter(
-					(c) => c.url !== url,
-				);
+				relay.onclose = () => {
+					setStatus(url, "disconnected");
+					connectionsRef.current = connectionsRef.current.filter(
+						(c) => c.url !== url,
+					);
+					scheduleReconnect(url);
+				};
+			} catch {
+				setStatus(url, "error");
 				scheduleReconnect(url);
-			};
-		} catch {
-			setStatus(url, "error");
-			scheduleReconnect(url);
-		}
-	};
+			}
+		},
+		[setStatus],
+	);
 
-	const scheduleReconnect = (url: string) => {
-		const existing = reconnectTimersRef.current.get(url);
-		if (existing) clearTimeout(existing);
+	const scheduleReconnect = useCallback(
+		(url: string) => {
+			const existing = reconnectTimersRef.current.get(url);
+			if (existing) clearTimeout(existing);
 
-		const attempt = attemptCountRef.current.get(url) ?? 0;
-		const delay = backoffDelay(attempt);
-		attemptCountRef.current.set(url, attempt + 1);
+			const attempt = attemptCountRef.current.get(url) ?? 0;
+			const delay = backoffDelay(attempt);
+			attemptCountRef.current.set(url, attempt + 1);
 
-		const timer = setTimeout(() => {
-			reconnectTimersRef.current.delete(url);
-			connectToRelay(url);
-		}, delay);
-		reconnectTimersRef.current.set(url, timer);
-	};
+			const timer = setTimeout(() => {
+				reconnectTimersRef.current.delete(url);
+				connectToRelay(url);
+			}, delay);
+			reconnectTimersRef.current.set(url, timer);
+		},
+		[connectToRelay],
+	);
 
-	const connect = () => {
+	const connect = useCallback(() => {
 		const urls = getRelayUrls();
 		for (const url of urls) {
 			connectToRelay(url);
 		}
-	};
+	}, [connectToRelay]);
 
-	const disconnect = () => {
+	const disconnect = useCallback(() => {
 		for (const timer of reconnectTimersRef.current.values()) {
 			clearTimeout(timer);
 		}
@@ -80,40 +86,42 @@ export function useRelayPool() {
 			conn.relay.close();
 		}
 		connectionsRef.current = [];
-	};
+	}, []);
 
-	const publish = async (event: Event): Promise<void> => {
+	const publish = useCallback(async (event: Event): Promise<void> => {
 		const promises = connectionsRef.current.map((conn) =>
 			conn.relay.publish(event),
 		);
 		await Promise.allSettled(promises);
-	};
+	}, []);
 
-	const subscribe = (
-		filters: Filter[],
-		onEvent: (event: Event) => void,
-		onEose?: () => void,
-	) => {
-		const subs = connectionsRef.current.map((conn) => {
-			const sub = conn.relay.subscribe(filters, {
-				onevent: onEvent,
-				oneose: onEose,
+	const subscribe = useCallback(
+		(
+			filters: Filter[],
+			onEvent: (event: Event) => void,
+			onEose?: () => void,
+		) => {
+			const subs = connectionsRef.current.map((conn) => {
+				const sub = conn.relay.subscribe(filters, {
+					onevent: onEvent,
+					oneose: onEose,
+				});
+				return sub;
 			});
-			return sub;
-		});
 
-		return () => {
-			for (const sub of subs) {
-				sub.close();
-			}
-		};
-	};
+			return () => {
+				for (const sub of subs) {
+					sub.close();
+				}
+			};
+		},
+		[],
+	);
 
 	useEffect(() => {
 		connect();
 		return () => disconnect();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [connect, disconnect]);
 
 	return { publish, subscribe, connect, disconnect };
 }

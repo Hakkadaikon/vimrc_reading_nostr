@@ -5,6 +5,7 @@ import {
 	nsecToSecretKey,
 	secretKeyToNsec,
 } from "#/lib/nostr/keys";
+import { getNip07Provider } from "#/lib/nostr/nip07";
 import { useAuthStore } from "#/stores/auth-store";
 
 type LoginDialogProps = {
@@ -28,20 +29,15 @@ export function LoginDialog({ onClose }: LoginDialogProps) {
 
 	const handleNip07Login = async () => {
 		setError("");
-		if (
-			typeof window === "undefined" ||
-			!(window as unknown as Record<string, unknown>).nostr
-		) {
+		const provider = getNip07Provider();
+		if (!provider) {
 			setError(
 				"NIP-07対応の拡張機能が見つかりません（nos2x等をインストールしてください）",
 			);
 			return;
 		}
 		try {
-			const nostr = (window as unknown as Record<string, unknown>).nostr as {
-				getPublicKey: () => Promise<string>;
-			};
-			const pubkey = await nostr.getPublicKey();
+			const pubkey = await provider.getPublicKey();
 			loginWithNip07(pubkey);
 			onClose();
 		} catch {

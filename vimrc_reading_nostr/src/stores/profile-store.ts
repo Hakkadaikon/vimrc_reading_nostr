@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { shortenNpub } from "#/lib/nostr/nip19";
 
 export type UserProfile = {
 	name?: string;
@@ -32,11 +33,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
 		if (profile?.name) {
 			return profile.name;
 		}
-		// pubkeyを短縮表示
-		if (pubkey.length > 16) {
-			return `${pubkey.slice(0, 8)}...${pubkey.slice(-4)}`;
-		}
-		return pubkey;
+		return shortenNpub(pubkey);
 	},
 
 	clearProfiles: () => {
