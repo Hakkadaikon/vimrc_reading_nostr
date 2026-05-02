@@ -1,10 +1,9 @@
 import type { Filter } from "nostr-tools/filter";
 
-// vimrc読書会の固定チャンネルID
-// 本番では kind:40 で作成したイベントIDに置き換える
+// vimrc読書会の固定チャンネルID（NIP-28 kind:40 イベントID）
 export const CHANNEL_ID =
 	import.meta.env.VITE_CHANNEL_ID ||
-	"0000000000000000000000000000000000000000000000000000000000000000";
+	"68a2c914182e5bcad16635536f68580de6ae531464baa449c274c40053a96bc0";
 
 type MessageFilterOptions = {
 	limit?: number;
