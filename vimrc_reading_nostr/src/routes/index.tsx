@@ -8,12 +8,17 @@ import { MessageList } from "#/components/chat/MessageList";
 import { ConnectionStatus } from "#/components/common/ConnectionStatus";
 import { useRelayPool } from "#/hooks/useRelayPool";
 import { CHANNEL_ID, createChannelMessageFilter } from "#/lib/nostr/channel";
-import { createChannelMessageEvent } from "#/lib/nostr/events";
+import {
+	createChannelMessageEvent,
+	createDeleteEvent,
+} from "#/lib/nostr/events";
 import { decodeNevent } from "#/lib/nostr/nip19";
+import { createReactionEvent } from "#/lib/nostr/reactions";
 import { useAuthStore } from "#/stores/auth-store";
 import type { NostrMessage } from "#/stores/message-store";
 import { useMessageStore } from "#/stores/message-store";
 import { useProfileStore } from "#/stores/profile-store";
+import { useReactionStore } from "#/stores/reaction-store";
 
 export const Route = createFileRoute("/")({ component: ChatPage });
 
@@ -24,7 +29,9 @@ function ChatPage() {
 	const secretKey = useAuthStore((s) => s.secretKey);
 	const loginMethod = useAuthStore((s) => s.loginMethod);
 	const addMessage = useMessageStore((s) => s.addMessage);
+	const deleteMessage = useMessageStore((s) => s.deleteMessage);
 	const setProfile = useProfileStore((s) => s.setProfile);
+	const addReaction = useReactionStore((s) => s.addReaction);
 	const [showLogin, setShowLogin] = useState(false);
 	const [highlightedEventId, setHighlightedEventId] = useState<
 		string | undefined
@@ -42,7 +49,7 @@ function ChatPage() {
 		}
 	}, []);
 
-	// メッセージ購読
+	// メッセージ・プロフィール・リアクション・削除の購読
 	useEffect(() => {
 		const filter = createChannelMessageFilter({ limit: 100 });
 		const unsub = subscribe(
@@ -51,11 +58,10 @@ function ChatPage() {
 				addMessage(event as NostrMessage);
 			},
 			() => {
-				// EOSE: 過去メッセージの読み込み完了
+				// EOSE
 			},
 		);
 
-		// プロフィール購読（kind:0）
 		const profileUnsub = subscribe([{ kinds: [0] }], (event: Event) => {
 			try {
 				const metadata = JSON.parse(event.content);
@@ -69,23 +75,40 @@ function ChatPage() {
 			}
 		});
 
+		// リアクション購読（kind:7）
+		const reactionUnsub = subscribe([{ kinds: [7] }], (event: Event) => {
+			const eTag = event.tags.find((t) => t[0] === "e");
+			if (eTag) {
+				addReaction(eTag[1], {
+					id: event.id,
+					pubkey: event.pubkey,
+					content: event.content,
+				});
+			}
+		});
+
+		// 削除イベント購読（kind:5）
+		const deleteUnsub = subscribe([{ kinds: [5] }], (event: Event) => {
+			for (const tag of event.tags) {
+				if (tag[0] === "e") {
+					deleteMessage(tag[1]);
+				}
+			}
+		});
+
 		return () => {
 			unsub();
 			profileUnsub();
+			reactionUnsub();
+			deleteUnsub();
 		};
-	}, [subscribe, addMessage, setProfile]);
+	}, [subscribe, addMessage, setProfile, addReaction, deleteMessage]);
 
-	const handleSendMessage = useCallback(
-		async (content: string) => {
+	const signAndPublish = useCallback(
+		async (template: ReturnType<typeof createChannelMessageEvent>) => {
 			if (!publicKey) return;
 
-			const template = createChannelMessageEvent({
-				content,
-				channelId: CHANNEL_ID,
-			});
-
 			let signedEvent: Event;
-
 			if (loginMethod === "nip07") {
 				const nostr = (window as unknown as Record<string, unknown>).nostr as {
 					signEvent: (event: unknown) => Promise<Event>;
@@ -99,10 +122,39 @@ function ChatPage() {
 			} else {
 				return;
 			}
-
 			await publish(signedEvent);
 		},
 		[publicKey, secretKey, loginMethod, publish],
+	);
+
+	const handleSendMessage = useCallback(
+		async (content: string) => {
+			const template = createChannelMessageEvent({
+				content,
+				channelId: CHANNEL_ID,
+			});
+			await signAndPublish(template);
+		},
+		[signAndPublish],
+	);
+
+	const handleReact = useCallback(
+		async (eventId: string, targetPubkey: string) => {
+			const template = createReactionEvent({
+				targetEventId: eventId,
+				targetPubkey: targetPubkey,
+			});
+			await signAndPublish(template);
+		},
+		[signAndPublish],
+	);
+
+	const handleDelete = useCallback(
+		async (eventId: string) => {
+			const template = createDeleteEvent(eventId);
+			await signAndPublish(template);
+		},
+		[signAndPublish],
 	);
 
 	return (
@@ -135,7 +187,11 @@ function ChatPage() {
 				</div>
 			</div>
 
-			<MessageList highlightedEventId={highlightedEventId} />
+			<MessageList
+				highlightedEventId={highlightedEventId}
+				onReact={isLoggedIn ? handleReact : undefined}
+				onDelete={isLoggedIn ? handleDelete : undefined}
+			/>
 
 			{isLoggedIn ? (
 				<MessageForm onSubmit={handleSendMessage} />

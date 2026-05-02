@@ -4,15 +4,20 @@ import { MessageItem } from "./MessageItem";
 
 type MessageListProps = {
 	highlightedEventId?: string;
+	onReact?: (eventId: string, pubkey: string) => void;
+	onDelete?: (eventId: string) => void;
 };
 
-export function MessageList({ highlightedEventId }: MessageListProps) {
+export function MessageList({
+	highlightedEventId,
+	onReact,
+	onDelete,
+}: MessageListProps) {
 	const messages = useMessageStore((s) => s.messages);
 	const bottomRef = useRef<HTMLDivElement>(null);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const isNearBottomRef = useRef(true);
 
-	// スクロール位置の追跡
 	useEffect(() => {
 		const container = containerRef.current;
 		if (!container) return;
@@ -26,14 +31,12 @@ export function MessageList({ highlightedEventId }: MessageListProps) {
 		return () => container.removeEventListener("scroll", handleScroll);
 	}, []);
 
-	// 新着メッセージで自動スクロール（底近くにいるときのみ）
 	useEffect(() => {
 		if (isNearBottomRef.current) {
 			bottomRef.current?.scrollIntoView({ behavior: "smooth" });
 		}
 	}, [messages.length]);
 
-	// Permalink指定時のスクロール
 	useEffect(() => {
 		if (highlightedEventId) {
 			const el = document.getElementById(`msg-${highlightedEventId}`);
@@ -58,6 +61,8 @@ export function MessageList({ highlightedEventId }: MessageListProps) {
 					key={msg.id}
 					message={msg}
 					highlighted={msg.id === highlightedEventId}
+					onReact={onReact}
+					onDelete={onDelete}
 				/>
 			))}
 			<div ref={bottomRef} />

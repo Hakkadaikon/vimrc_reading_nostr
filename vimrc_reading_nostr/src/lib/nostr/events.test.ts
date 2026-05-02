@@ -1,6 +1,11 @@
 import { finalizeEvent } from "nostr-tools/pure";
 import { describe, expect, it } from "vitest";
-import { createChannelMessageEvent, verifyEvent } from "./events";
+import {
+	createChannelMessageEvent,
+	createDeleteEvent,
+	createEditedMessageEvent,
+	verifyEvent,
+} from "./events";
 import { generateKeyPair } from "./keys";
 
 describe("createChannelMessageEvent", () => {
@@ -35,6 +40,34 @@ describe("createChannelMessageEvent", () => {
 		const eTag = event.tags.find((t) => t[0] === "e");
 		expect(eTag?.[2]).toBe("");
 		expect(eTag?.[3]).toBe("root");
+	});
+});
+
+describe("createEditedMessageEvent", () => {
+	it("編集メッセージはkind:42で元メッセージIDをeタグに含む", () => {
+		const event = createEditedMessageEvent({
+			content: "edited content",
+			channelId: "channel1",
+			originalEventId: "original1",
+		});
+		expect(event.kind).toBe(42);
+		expect(event.content).toBe("edited content");
+		const eTags = event.tags.filter((t) => t[0] === "e");
+		expect(eTags).toHaveLength(2);
+		// 先頭eタグはチャンネルID
+		expect(eTags[0][1]).toBe("channel1");
+		expect(eTags[0][3]).toBe("root");
+		// 2つ目は元メッセージへの参照
+		expect(eTags[1][1]).toBe("original1");
+	});
+});
+
+describe("createDeleteEvent", () => {
+	it("kind:5の削除イベントを作成する", () => {
+		const event = createDeleteEvent("target-event-id");
+		expect(event.kind).toBe(5);
+		const eTag = event.tags.find((t) => t[0] === "e");
+		expect(eTag?.[1]).toBe("target-event-id");
 	});
 });
 

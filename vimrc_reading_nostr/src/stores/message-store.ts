@@ -12,8 +12,10 @@ export type NostrMessage = {
 
 type MessageState = {
 	messages: NostrMessage[];
+	deletedIds: Set<string>;
 	addMessage: (event: NostrMessage) => void;
 	addMessages: (events: NostrMessage[]) => void;
+	deleteMessage: (eventId: string) => void;
 	clearMessages: () => void;
 };
 
@@ -31,6 +33,7 @@ function insertSorted(
 
 export const useMessageStore = create<MessageState>((set) => ({
 	messages: [],
+	deletedIds: new Set<string>(),
 
 	addMessage: (event) => {
 		set((state) => ({
@@ -48,7 +51,15 @@ export const useMessageStore = create<MessageState>((set) => ({
 		});
 	},
 
+	deleteMessage: (eventId) => {
+		set((state) => {
+			const newDeleted = new Set(state.deletedIds);
+			newDeleted.add(eventId);
+			return { deletedIds: newDeleted };
+		});
+	},
+
 	clearMessages: () => {
-		set({ messages: [] });
+		set({ messages: [], deletedIds: new Set<string>() });
 	},
 }));

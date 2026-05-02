@@ -59,4 +59,18 @@ describe("useMessageStore", () => {
 		useMessageStore.getState().clearMessages();
 		expect(useMessageStore.getState().messages).toEqual([]);
 	});
+
+	it("メッセージを論理削除できる", () => {
+		useMessageStore.getState().addMessage(makeEvent("id1", "Hello", 1000));
+		useMessageStore.getState().deleteMessage("id1");
+		expect(useMessageStore.getState().deletedIds.has("id1")).toBe(true);
+		// メッセージ自体は残る（UIで「削除されました」表示に使う）
+		expect(useMessageStore.getState().messages).toHaveLength(1);
+	});
+
+	it("clearMessagesで削除IDもクリアされる", () => {
+		useMessageStore.getState().deleteMessage("id1");
+		useMessageStore.getState().clearMessages();
+		expect(useMessageStore.getState().deletedIds.size).toBe(0);
+	});
 });

@@ -1,16 +1,30 @@
 import { renderMarkdown } from "#/lib/markdown";
 import { encodeNevent } from "#/lib/nostr/nip19";
+import { useAuthStore } from "#/stores/auth-store";
 import type { NostrMessage } from "#/stores/message-store";
+import { useMessageStore } from "#/stores/message-store";
 import { useProfileStore } from "#/stores/profile-store";
+import { useReactionStore } from "#/stores/reaction-store";
 
 type MessageItemProps = {
 	message: NostrMessage;
 	highlighted?: boolean;
+	onReact?: (eventId: string, pubkey: string) => void;
+	onDelete?: (eventId: string) => void;
 };
 
-export function MessageItem({ message, highlighted }: MessageItemProps) {
+export function MessageItem({
+	message,
+	highlighted,
+	onReact,
+	onDelete,
+}: MessageItemProps) {
 	const getDisplayName = useProfileStore((s) => s.getDisplayName);
 	const getProfile = useProfileStore((s) => s.getProfile);
+	const reactionCount = useReactionStore((s) => s.getReactionCount(message.id));
+	const isDeleted = useMessageStore((s) => s.deletedIds.has(message.id));
+	const currentPubkey = useAuthStore((s) => s.publicKey);
+	const isOwn = currentPubkey === message.pubkey;
 	const profile = getProfile(message.pubkey);
 	const displayName = getDisplayName(message.pubkey);
 	const nevent = encodeNevent(message.id);
@@ -22,12 +36,23 @@ export function MessageItem({ message, highlighted }: MessageItemProps) {
 		minute: "2-digit",
 	});
 
+	if (isDeleted) {
+		return (
+			<div
+				id={`msg-${message.id}`}
+				className="px-4 py-2 text-sm text-gray-400 italic"
+			>
+				このメッセージは削除されました
+			</div>
+		);
+	}
+
 	const html = renderMarkdown(message.content);
 
 	return (
 		<div
 			id={`msg-${message.id}`}
-			className={`flex gap-3 px-4 py-3 transition-colors ${
+			className={`group flex gap-3 px-4 py-3 transition-colors ${
 				highlighted
 					? "bg-yellow-50 dark:bg-yellow-900/20"
 					: "hover:bg-gray-50 dark:hover:bg-gray-800/50"
@@ -64,6 +89,32 @@ export function MessageItem({ message, highlighted }: MessageItemProps) {
 					// biome-ignore lint/security/noDangerouslySetInnerHtml: Markdown rendered and sanitized by renderMarkdown
 					dangerouslySetInnerHTML={{ __html: html }}
 				/>
+				<div className="mt-1 flex items-center gap-2">
+					{onReact && (
+						<button
+							type="button"
+							onClick={() => onReact(message.id, message.pubkey)}
+							className="flex items-center gap-1 rounded px-2 py-0.5 text-xs text-gray-500 opacity-0 transition hover:bg-gray-100 group-hover:opacity-100 dark:hover:bg-gray-700"
+							title="リアクション"
+						>
+							<span>+</span>
+							{reactionCount > 0 && <span>{reactionCount}</span>}
+						</button>
+					)}
+					{reactionCount > 0 && !onReact && (
+						<span className="text-xs text-gray-500">+{reactionCount}</span>
+					)}
+					{isOwn && onDelete && (
+						<button
+							type="button"
+							onClick={() => onDelete(message.id)}
+							className="rounded px-2 py-0.5 text-xs text-red-400 opacity-0 transition hover:bg-red-50 group-hover:opacity-100 dark:hover:bg-red-900/20"
+							title="削除"
+						>
+							削除
+						</button>
+					)}
+				</div>
 			</div>
 		</div>
 	);
