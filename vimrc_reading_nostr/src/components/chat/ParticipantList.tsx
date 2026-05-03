@@ -1,4 +1,4 @@
-import { npubEncode } from "nostr-tools/nip19";
+import { publicKeyToNpub } from "#/lib/nostr/keys";
 import { useProfileStore } from "#/stores/profile-store";
 
 type ParticipantListProps = {
@@ -24,11 +24,10 @@ function ParticipantItem({ pubkey }: { pubkey: string }) {
 
 	let npub: string;
 	try {
-		npub = npubEncode(pubkey);
+		npub = publicKeyToNpub(pubkey);
 	} catch {
 		npub = pubkey;
 	}
-
 	const profileUrl = `https://njump.me/${npub}`;
 
 	return (

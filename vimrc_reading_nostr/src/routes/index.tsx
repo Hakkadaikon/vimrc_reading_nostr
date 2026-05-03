@@ -46,10 +46,17 @@ function ChatPage() {
 		string | undefined
 	>();
 
-	// 当日〜翌AM2:00(JST)の発言者リスト
+	// 当日〜翌AM2:00(JST)の発言者リスト（参照安定化）
+	const prevParticipantsRef = useRef<string[]>([]);
 	const participantPubkeys = useMemo(() => {
 		const { start, end } = getTodayRange(Math.floor(Date.now() / 1000));
-		return getTodayParticipants(messages, start, end);
+		const next = getTodayParticipants(messages, start, end);
+		const prev = prevParticipantsRef.current;
+		if (next.length === prev.length && next.every((pk, i) => pk === prev[i])) {
+			return prev;
+		}
+		prevParticipantsRef.current = next;
+		return next;
 	}, [messages]);
 
 	// プロフィール取得バッチ用
