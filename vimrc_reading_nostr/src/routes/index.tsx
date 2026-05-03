@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import type { Event } from "nostr-tools/core";
 import { finalizeEvent } from "nostr-tools/pure";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -14,10 +14,10 @@ import {
 	getETag,
 	getETags,
 } from "#/lib/nostr/events";
-import { parseProfileMetadata } from "#/lib/nostr/metadata";
 import { getNip07Provider } from "#/lib/nostr/nip07";
 import { decodeNevent } from "#/lib/nostr/nip19";
 import { createReactionEvent } from "#/lib/nostr/reactions";
+import { resolveProfile } from "#/lib/nostr/relay-discovery";
 import { useAuthStore } from "#/stores/auth-store";
 import type { NostrMessage } from "#/stores/message-store";
 import { useMessageStore } from "#/stores/message-store";
@@ -42,12 +42,12 @@ function ChatPage() {
 		string | undefined
 	>();
 
-	// プロフィール取得バッチ用 — 未取得pubkeyを貯めて一括リクエスト
+	// プロフィール取得バッチ用
 	const pendingPubkeysRef = useRef<Set<string>>(new Set());
 	const batchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	const fetchProfiles = useCallback(
-		(pubkeys: string[]) => {
+		async (pubkeys: string[]) => {
 			const unfetched = pubkeys.filter((pk) =>
 				useProfileStore.getState().needsFetch(pk),
 			);
@@ -57,17 +57,18 @@ function ChatPage() {
 				markRequested(pk);
 			}
 
-			subscribe([{ kinds: [0], authors: unfetched }], (event: Event) => {
-				const profile = parseProfileMetadata(event.content);
+			// 各pubkeyについて: directory.yabu.me → kind:10002 → リレー特定 → kind:0取得
+			const promises = unfetched.map(async (pk) => {
+				const profile = await resolveProfile(pk);
 				if (profile) {
-					setProfile(event.pubkey, profile);
+					setProfile(pk, profile);
 				}
 			});
+			await Promise.allSettled(promises);
 		},
-		[subscribe, setProfile, markRequested],
+		[setProfile, markRequested],
 	);
 
-	// pubkeyをバッチに追加し、50ms後にまとめてリクエスト
 	const requestProfile = useCallback(
 		(pubkey: string) => {
 			if (!useProfileStore.getState().needsFetch(pubkey)) return;
@@ -103,7 +104,6 @@ function ChatPage() {
 			[filter],
 			(event: Event) => {
 				addMessage(event as NostrMessage);
-				// メッセージ投稿者のプロフィールを取得
 				requestProfile(event.pubkey);
 			},
 			() => {
@@ -200,7 +200,13 @@ function ChatPage() {
 					</h1>
 					<ConnectionStatus />
 				</div>
-				<div>
+				<div className="flex items-center gap-3">
+					<Link
+						to="/settings"
+						className="text-sm text-[var(--sea-ink-soft)] hover:underline"
+					>
+						設定
+					</Link>
 					{isLoggedIn ? (
 						<button
 							type="button"

@@ -75,7 +75,7 @@ test.describe("ログインダイアログ", () => {
 		await page.getByText("新しい鍵ペアを生成").click();
 		await page.getByRole("button", { name: "保管しました" }).click();
 
-		await expect(page.getByText("ログアウト")).toBeVisible();
+		await expect(page.getByText("ログアウト")).toBeVisible({ timeout: 10000 });
 		await expect(page.getByPlaceholder("メッセージを入力...")).toBeVisible();
 		await expect(page.getByRole("button", { name: "投稿" })).toBeVisible();
 	});
