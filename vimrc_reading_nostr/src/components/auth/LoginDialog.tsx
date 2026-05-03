@@ -107,7 +107,7 @@ export function LoginDialog({ onClose, onPublishEvent }: LoginDialogProps) {
 							value={nameInput}
 							onChange={(e) => setNameInput(e.target.value)}
 							placeholder="名前を入力"
-							className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[rgba(79,184,178,0.6)] dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+							className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[rgba(233,84,32,0.6)] dark:border-gray-600 dark:bg-gray-700 dark:text-white"
 						/>
 					</div>
 					<div className="mb-4 rounded-lg bg-yellow-50 p-4 text-sm dark:bg-yellow-900/30">
@@ -151,7 +151,7 @@ export function LoginDialog({ onClose, onPublishEvent }: LoginDialogProps) {
 					<button
 						type="button"
 						onClick={handleConfirmGenerated}
-						className="w-full rounded-lg bg-[rgba(79,184,178,0.9)] py-2 text-sm font-semibold text-white hover:bg-[rgba(79,184,178,1)]"
+						className="w-full rounded-lg bg-[rgba(233,84,32,0.9)] py-2 text-sm font-semibold text-white hover:bg-[rgba(233,84,32,1)]"
 					>
 						保管しました
 					</button>
@@ -219,7 +219,7 @@ export function LoginDialog({ onClose, onPublishEvent }: LoginDialogProps) {
 								value={nsecInput}
 								onChange={(e) => setNsecInput(e.target.value)}
 								placeholder="nsec1..."
-								className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[rgba(79,184,178,0.6)] dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+								className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[rgba(233,84,32,0.6)] dark:border-gray-600 dark:bg-gray-700 dark:text-white"
 							/>
 							<button
 								type="button"

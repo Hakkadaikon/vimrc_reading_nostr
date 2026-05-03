@@ -42,12 +42,12 @@ export function MessageForm({ onSubmit, disabled }: MessageFormProps) {
 				placeholder="メッセージを入力... (Ctrl+Enterで送信)"
 				disabled={disabled || sending}
 				rows={3}
-				className="flex-1 resize-none rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm outline-none focus:border-[rgba(79,184,178,0.6)] focus:ring-2 focus:ring-[rgba(79,184,178,0.2)] disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+				className="flex-1 resize-none rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm outline-none focus:border-[rgba(233,84,32,0.6)] focus:ring-2 focus:ring-[rgba(233,84,32,0.2)] disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
 			/>
 			<button
 				type="submit"
 				disabled={disabled || sending || !content.trim()}
-				className="self-end rounded-lg bg-[rgba(79,184,178,0.9)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[rgba(79,184,178,1)] disabled:opacity-50"
+				className="self-end rounded-lg bg-[rgba(233,84,32,0.9)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[rgba(233,84,32,1)] disabled:opacity-50"
 			>
 				{sending ? "送信中..." : "投稿"}
 			</button>

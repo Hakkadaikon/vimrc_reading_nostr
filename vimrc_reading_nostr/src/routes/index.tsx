@@ -246,7 +246,7 @@ function ChatPage() {
 						<button
 							type="button"
 							onClick={() => setShowLogin(true)}
-							className="rounded-lg bg-[rgba(79,184,178,0.9)] px-4 py-1.5 text-sm font-semibold text-white hover:bg-[rgba(79,184,178,1)]"
+							className="rounded-lg bg-[rgba(233,84,32,0.9)] px-4 py-1.5 text-sm font-semibold text-white hover:bg-[rgba(233,84,32,1)]"
 						>
 							ログイン
 						</button>
@@ -273,7 +273,7 @@ function ChatPage() {
 							<button
 								type="button"
 								onClick={() => setShowLogin(true)}
-								className="text-[rgba(79,184,178,1)] hover:underline"
+								className="text-[rgba(233,84,32,1)] hover:underline"
 							>
 								ログイン
 							</button>

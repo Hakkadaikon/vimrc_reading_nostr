@@ -98,7 +98,7 @@ function SettingsPage() {
 							type="checkbox"
 							checked={githubPreviewEnabled}
 							onChange={(e) => setGithubPreviewEnabled(e.target.checked)}
-							className="h-5 w-5 rounded accent-[rgba(79,184,178,0.9)]"
+							className="h-5 w-5 rounded accent-[rgba(233,84,32,0.9)]"
 						/>
 					</label>
 				</section>
