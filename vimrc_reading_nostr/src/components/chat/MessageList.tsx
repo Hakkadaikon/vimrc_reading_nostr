@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMessageStore } from "#/stores/message-store";
 import { MessageItem } from "./MessageItem";
 
@@ -22,27 +22,26 @@ export function MessageList({
 	const containerRef = useRef<HTMLDivElement>(null);
 	const isNearBottomRef = useRef(true);
 	const [initialScrollDone, setInitialScrollDone] = useState(false);
-
-	const handleScroll = useCallback(() => {
-		const container = containerRef.current;
-		if (!container) return;
-		const { scrollTop, scrollHeight, clientHeight } = container;
-		isNearBottomRef.current = scrollHeight - scrollTop - clientHeight < 100;
-
-		if (scrollTop < 200 && onLoadOlder && !loadingOlder) {
-			onLoadOlder();
-		}
-	}, [onLoadOlder, loadingOlder]);
+	const onLoadOlderRef = useRef(onLoadOlder);
+	onLoadOlderRef.current = onLoadOlder;
 
 	useEffect(() => {
 		const container = containerRef.current;
 		if (!container) return;
+
+		const handleScroll = () => {
+			const { scrollTop, scrollHeight, clientHeight } = container;
+			isNearBottomRef.current = scrollHeight - scrollTop - clientHeight < 100;
+
+			if (scrollTop === 0 && onLoadOlderRef.current) {
+				onLoadOlderRef.current();
+			}
+		};
+
 		container.addEventListener("scroll", handleScroll);
 		return () => container.removeEventListener("scroll", handleScroll);
-	}, [handleScroll]);
+	}, []);
 
-	// 初回: 最下部にスクロール
-	// biome-ignore lint/correctness/useExhaustiveDependencies: messages.lengthの変化でスクロールをトリガーする
 	useEffect(() => {
 		if (!initialScrollDone && messages.length > 0) {
 			bottomRef.current?.scrollIntoView();
@@ -53,6 +52,27 @@ export function MessageList({
 			bottomRef.current?.scrollIntoView({ behavior: "smooth" });
 		}
 	}, [messages.length, initialScrollDone]);
+
+	// 過去メッセージ読み込み後、スクロール位置を維持する
+	const prevMessagesLengthRef = useRef(messages.length);
+	useEffect(() => {
+		const container = containerRef.current;
+		if (
+			container &&
+			messages.length > prevMessagesLengthRef.current &&
+			container.scrollTop === 0
+		) {
+			// 先頭に追加されたメッセージ分だけスクロール位置を下にずらす
+			const addedCount = messages.length - prevMessagesLengthRef.current;
+			const children = container.children;
+			let offsetHeight = 0;
+			for (let i = 0; i < addedCount && i < children.length; i++) {
+				offsetHeight += (children[i] as HTMLElement).offsetHeight;
+			}
+			container.scrollTop = offsetHeight;
+		}
+		prevMessagesLengthRef.current = messages.length;
+	});
 
 	const scrolledToHighlightRef = useRef(false);
 	const prevHighlightIdRef = useRef(highlightedEventId);
