@@ -55,7 +55,7 @@ src/
 
 | 変数名 | 説明 | デフォルト |
 |--------|------|-----------|
-| `VITE_RELAY_URLS` | リレーURLのカンマ区切り | `wss://relay.damus.io,wss://nos.lol` |
+| `VITE_RELAY_URLS` | リレーURLのカンマ区切り | `wss://yabu.me,wss://relay-jp.nostr.wirednet.jp` |
 
 ## テスト
 

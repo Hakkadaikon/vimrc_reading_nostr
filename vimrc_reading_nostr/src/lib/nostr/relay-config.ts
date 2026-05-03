@@ -1,6 +1,6 @@
 export const DEFAULT_RELAY_URLS: string[] = [
-	"wss://relay.damus.io",
-	"wss://nos.lol",
+	"wss://yabu.me",
+	"wss://relay-jp.nostr.wirednet.jp",
 ];
 
 export function getRelayUrls(): string[] {

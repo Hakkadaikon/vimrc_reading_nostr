@@ -3,7 +3,7 @@ import type { Filter } from "nostr-tools/filter";
 // vimrc読書会の固定チャンネルID（NIP-28 kind:40 イベントID）
 export const CHANNEL_ID =
 	import.meta.env.VITE_CHANNEL_ID ||
-	"68a2c914182e5bcad16635536f68580de6ae531464baa449c274c40053a96bc0";
+	"4127d704015b030339a6955af2bb1b4e63f0c0b1c3c12478d1db685b0d781486";
 
 type MessageFilterOptions = {
 	limit?: number;

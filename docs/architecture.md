@@ -79,7 +79,7 @@
 
 ```
 環境変数: VITE_RELAY_URLS
-デフォルト: wss://relay.damus.io,wss://nos.lol
+デフォルト: wss://yabu.me,wss://relay-jp.nostr.wirednet.jp
 （本番では独自リレー2-3台に置き換え）
 ```
 
