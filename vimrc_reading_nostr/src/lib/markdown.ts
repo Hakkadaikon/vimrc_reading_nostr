@@ -1,3 +1,4 @@
+import DOMPurify from "dompurify";
 import hljs from "highlight.js";
 import { marked } from "marked";
 
@@ -13,17 +14,13 @@ marked.setOptions({
 export function renderMarkdown(content: string): string {
 	const html = marked.parse(content, { async: false }) as string;
 	if (typeof window !== "undefined" && typeof window.document !== "undefined") {
-		const div = document.createElement("div");
-		div.innerHTML = html;
-		// scriptタグを除去
-		for (const script of div.querySelectorAll("script")) {
-			script.remove();
-		}
-		return div.innerHTML;
+		return DOMPurify.sanitize(html);
 	}
-	// SSR/テスト環境ではscriptタグを正規表現で除去
-	return html.replace(
-		/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
-		"",
-	);
+	// SSR環境: scriptタグ・イベントハンドラを除去（フォールバック）
+	return html
+		.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+		.replace(/<iframe\b[^>]*>.*?<\/iframe>/gi, "")
+		.replace(/\s*on\w+\s*=\s*"[^"]*"/gi, "")
+		.replace(/\s*on\w+\s*=\s*'[^']*'/gi, "")
+		.replace(/javascript\s*:/gi, "");
 }

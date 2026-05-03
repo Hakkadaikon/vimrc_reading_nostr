@@ -33,6 +33,32 @@ describe("renderMarkdown", () => {
 		expect(result).not.toContain("<script>");
 	});
 
+	it("imgタグのonerrorイベントハンドラが実行不可能になる", () => {
+		const result = renderMarkdown('<img src=x onerror=alert("xss")>');
+		// DOMPurifyがonerror属性を除去するか、タグ全体をエスケープする
+		expect(result).not.toMatch(/<img[^>]+onerror/);
+	});
+
+	it("iframeタグを除去する", () => {
+		const result = renderMarkdown('<iframe src="https://evil.com"></iframe>');
+		expect(result).not.toContain("<iframe");
+	});
+
+	it("javascript:URLを除去する", () => {
+		const result = renderMarkdown('[click](javascript:alert("xss"))');
+		expect(result).not.toContain("javascript:");
+	});
+
+	it("onloadイベントハンドラを除去する", () => {
+		const result = renderMarkdown('<div onload="alert(1)">test</div>');
+		expect(result).not.toContain("onload");
+	});
+
+	it("SVG内のscriptを除去する", () => {
+		const result = renderMarkdown('<svg><script>alert("xss")</script></svg>');
+		expect(result).not.toContain("<script>");
+	});
+
 	it("リンクを変換する", () => {
 		const result = renderMarkdown("[link](https://example.com)");
 		expect(result).toContain('href="https://example.com"');
