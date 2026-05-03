@@ -115,17 +115,21 @@ export function LoginDialog({ onClose, onPublishEvent }: LoginDialogProps) {
 						<p className="mb-2 text-yellow-700 dark:text-yellow-300">
 							この秘密鍵を失うとアカウントを復元できません。
 						</p>
-						<button
-							type="button"
-							onClick={() => setShowNsec(!showNsec)}
-							className="block w-full cursor-pointer break-all rounded bg-yellow-100 p-2 text-left text-xs dark:bg-yellow-900/50"
-						>
-							<code>
-								{showNsec
-									? generatedNsec
-									: "●".repeat(20) + " (クリックで表示)"}
-							</code>
-						</button>
+						<div className="flex gap-1">
+							<input
+								type={showNsec ? "text" : "password"}
+								value={generatedNsec}
+								readOnly
+								className="flex-1 rounded bg-yellow-100 p-2 font-mono text-xs dark:bg-yellow-900/50"
+							/>
+							<button
+								type="button"
+								onClick={() => setShowNsec(!showNsec)}
+								className="shrink-0 rounded bg-yellow-200 px-2 text-xs text-yellow-800 hover:bg-yellow-300 dark:bg-yellow-800 dark:text-yellow-200 dark:hover:bg-yellow-700"
+							>
+								{showNsec ? "隠す" : "表示"}
+							</button>
+						</div>
 					</div>
 					<button
 						type="button"
