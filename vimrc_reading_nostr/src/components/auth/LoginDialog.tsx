@@ -1,6 +1,6 @@
 import type { Event } from "nostr-tools/core";
 import { finalizeEvent, getPublicKey } from "nostr-tools/pure";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { createMetadataEvent } from "#/lib/nostr/events";
 import {
 	generateKeyPair,
@@ -22,23 +22,28 @@ export function LoginDialog({ onClose, onPublishEvent }: LoginDialogProps) {
 	const [nsecInput, setNsecInput] = useState("");
 	const [error, setError] = useState("");
 	const [generatedNsec, setGeneratedNsec] = useState("");
-	const [generatedSecretKey, setGeneratedSecretKey] =
-		useState<Uint8Array | null>(null);
+	const secretKeyRef = useRef<Uint8Array | null>(null);
 	const [nameInput, setNameInput] = useState("");
 
 	const handleGenerateKeys = () => {
 		const { secretKey, publicKey } = generateKeyPair();
 		const nsec = secretKeyToNsec(secretKey);
 		setGeneratedNsec(nsec);
-		setGeneratedSecretKey(secretKey);
+		secretKeyRef.current = secretKey;
 		loginWithKeys(secretKey, publicKey);
 	};
 
 	const handleConfirmGenerated = async () => {
-		if (nameInput.trim() && generatedSecretKey && onPublishEvent) {
-			const template = createMetadataEvent({ name: nameInput.trim() });
-			const signedEvent = finalizeEvent(template, generatedSecretKey);
-			await onPublishEvent(signedEvent);
+		const trimmedName = nameInput.trim();
+		if (trimmedName && secretKeyRef.current && onPublishEvent) {
+			try {
+				const template = createMetadataEvent({ name: trimmedName });
+				const signedEvent = finalizeEvent(template, secretKeyRef.current);
+				await onPublishEvent(signedEvent);
+			} catch {
+				setError("プロフィールの保存に失敗しました");
+				return;
+			}
 		}
 		onClose();
 	};
