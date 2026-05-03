@@ -1,7 +1,8 @@
+import { memo } from "react";
 import { useAuthStore } from "#/stores/auth-store";
 import { useProfileStore } from "#/stores/profile-store";
 
-export function UserInfo() {
+export const UserInfo = memo(function UserInfo() {
 	const publicKey = useAuthStore((s) => s.publicKey);
 	const profile = useProfileStore((s) =>
 		publicKey ? s.profiles[publicKey] : undefined,
@@ -30,4 +31,4 @@ export function UserInfo() {
 			</span>
 		</div>
 	);
-}
+});

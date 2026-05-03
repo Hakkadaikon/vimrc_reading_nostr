@@ -1,13 +1,14 @@
+import { memo } from "react";
 import { useRelayStore } from "#/stores/relay-store";
 
-export function ConnectionStatus() {
+export const ConnectionStatus = memo(function ConnectionStatus() {
 	const statuses = useRelayStore((s) => s.statuses);
-	const isAnyConnected = useRelayStore((s) => s.isAnyConnected());
 
 	const connectedCount = Object.values(statuses).filter(
 		(s) => s === "connected",
 	).length;
 	const totalCount = Object.keys(statuses).length;
+	const isAnyConnected = connectedCount > 0;
 
 	return (
 		<div className="flex items-center gap-2 text-sm">
@@ -25,4 +26,4 @@ export function ConnectionStatus() {
 			</span>
 		</div>
 	);
-}
+});

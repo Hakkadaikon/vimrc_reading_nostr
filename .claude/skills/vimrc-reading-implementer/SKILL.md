@@ -1,6 +1,6 @@
 ---
 name: vimrc-reading-implementer
-model: sonnet
+model: opus
 description: >
   vimrc読書会Nostrクライアントの実装エージェント。TDD（テスト駆動開発）で実装する。
   docs/architecture.md の設計に従って、機能追加・変更・バグ修正のコードを書く。

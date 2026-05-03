@@ -33,6 +33,12 @@ export function useRelayPool() {
 	const setStatus = useRelayStore((s) => s.setStatus);
 	const [ready, setReady] = useState(false);
 
+	// Use refs to break circular dependency between connectToRelay and scheduleReconnect
+	// biome-ignore lint/style/noNonNullAssertion: initialized immediately below before any use
+	const connectToRelayRef = useRef<(url: string) => Promise<void>>(null!);
+	// biome-ignore lint/style/noNonNullAssertion: initialized immediately below before any use
+	const scheduleReconnectRef = useRef<(url: string) => void>(null!);
+
 	// 登録済みの全サブスクリプションを現在の全接続に適用する
 	const applySubscriptions = useCallback(() => {
 		// 既存のサブスクリプションをクリーンアップ
@@ -53,62 +59,49 @@ export function useRelayPool() {
 		}
 	}, []);
 
-	const connectToRelay = useCallback(
-		async (url: string) => {
-			setStatus(url, "connecting");
-			try {
-				const relay = await Relay.connect(url);
-				const connection: RelayConnection = { relay, url };
-				connectionsRef.current = [
-					...connectionsRef.current.filter((c) => c.url !== url),
-					connection,
-				];
-				attemptCountRef.current.set(url, 0);
-				setStatus(url, "connected");
-				setReady(true);
+	connectToRelayRef.current = async (url: string) => {
+		setStatus(url, "connecting");
+		try {
+			const relay = await Relay.connect(url);
+			const connection: RelayConnection = { relay, url };
+			connectionsRef.current = [
+				...connectionsRef.current.filter((c) => c.url !== url),
+				connection,
+			];
+			attemptCountRef.current.set(url, 0);
+			setStatus(url, "connected");
+			setReady(true);
 
-				// 新しい接続にサブスクリプションを適用
-				applySubscriptions();
+			// 新しい接続にサブスクリプションを適用
+			applySubscriptions();
 
-				relay.onclose = () => {
-					setStatus(url, "disconnected");
-					connectionsRef.current = connectionsRef.current.filter(
-						(c) => c.url !== url,
-					);
-					scheduleReconnect(url);
-				};
-			} catch {
-				setStatus(url, "error");
-				scheduleReconnect(url);
-			}
-		},
-		[setStatus, applySubscriptions],
-	);
-
-	const scheduleReconnect = useCallback(
-		(url: string) => {
-			const existing = reconnectTimersRef.current.get(url);
-			if (existing) clearTimeout(existing);
-
-			const attempt = attemptCountRef.current.get(url) ?? 0;
-			const delay = backoffDelay(attempt);
-			attemptCountRef.current.set(url, attempt + 1);
-
-			const timer = setTimeout(() => {
-				reconnectTimersRef.current.delete(url);
-				connectToRelay(url);
-			}, delay);
-			reconnectTimersRef.current.set(url, timer);
-		},
-		[connectToRelay],
-	);
-
-	const connect = useCallback(() => {
-		const urls = getRelayUrls();
-		for (const url of urls) {
-			connectToRelay(url);
+			relay.onclose = () => {
+				setStatus(url, "disconnected");
+				connectionsRef.current = connectionsRef.current.filter(
+					(c) => c.url !== url,
+				);
+				scheduleReconnectRef.current?.(url);
+			};
+		} catch {
+			setStatus(url, "error");
+			scheduleReconnectRef.current?.(url);
 		}
-	}, [connectToRelay]);
+	};
+
+	scheduleReconnectRef.current = (url: string) => {
+		const existing = reconnectTimersRef.current.get(url);
+		if (existing) clearTimeout(existing);
+
+		const attempt = attemptCountRef.current.get(url) ?? 0;
+		const delay = backoffDelay(attempt);
+		attemptCountRef.current.set(url, attempt + 1);
+
+		const timer = setTimeout(() => {
+			reconnectTimersRef.current.delete(url);
+			connectToRelayRef.current?.(url);
+		}, delay);
+		reconnectTimersRef.current.set(url, timer);
+	};
 
 	const disconnect = useCallback(() => {
 		for (const timer of reconnectTimersRef.current.values()) {
@@ -171,10 +164,14 @@ export function useRelayPool() {
 		[],
 	);
 
+	// Connect once on mount, disconnect on unmount
 	useEffect(() => {
-		connect();
+		const urls = getRelayUrls();
+		for (const url of urls) {
+			connectToRelayRef.current?.(url);
+		}
 		return () => disconnect();
-	}, [connect, disconnect]);
+	}, [disconnect]);
 
 	return { publish, subscribe, ready };
 }
