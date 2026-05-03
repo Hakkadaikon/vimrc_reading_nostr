@@ -5,6 +5,7 @@ export function parseProfileMetadata(content: string): UserProfile | null {
 		const data = JSON.parse(content);
 		return {
 			name: data.name,
+			display_name: data.display_name,
 			picture: data.picture,
 			about: data.about,
 		};

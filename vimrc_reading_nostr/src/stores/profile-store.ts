@@ -3,6 +3,7 @@ import { shortenNpub } from "#/lib/nostr/nip19";
 
 export type UserProfile = {
 	name?: string;
+	display_name?: string;
 	picture?: string;
 	about?: string;
 };
@@ -41,6 +42,9 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
 
 	getDisplayName: (pubkey) => {
 		const profile = get().profiles[pubkey];
+		if (profile?.display_name) {
+			return profile.display_name;
+		}
 		if (profile?.name) {
 			return profile.name;
 		}

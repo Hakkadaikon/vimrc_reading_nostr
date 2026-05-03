@@ -3,6 +3,7 @@ import type { Event } from "nostr-tools/core";
 import { finalizeEvent } from "nostr-tools/pure";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { LoginDialog } from "#/components/auth/LoginDialog";
+import { UserInfo } from "#/components/auth/UserInfo";
 import { MessageForm } from "#/components/chat/MessageForm";
 import { MessageList } from "#/components/chat/MessageList";
 import { ConnectionStatus } from "#/components/common/ConnectionStatus";
@@ -84,6 +85,13 @@ function ChatPage() {
 		},
 		[fetchProfiles],
 	);
+
+	// ログイン時に自分のプロフィールを取得
+	useEffect(() => {
+		if (publicKey) {
+			requestProfile(publicKey);
+		}
+	}, [publicKey, requestProfile]);
 
 	// URLからPermalink解析
 	useEffect(() => {
@@ -208,13 +216,16 @@ function ChatPage() {
 						設定
 					</Link>
 					{isLoggedIn ? (
-						<button
-							type="button"
-							onClick={() => useAuthStore.getState().logout()}
-							className="text-sm text-[var(--sea-ink-soft)] hover:underline"
-						>
-							ログアウト
-						</button>
+						<>
+							<UserInfo />
+							<button
+								type="button"
+								onClick={() => useAuthStore.getState().logout()}
+								className="text-sm text-[var(--sea-ink-soft)] hover:underline"
+							>
+								ログアウト
+							</button>
+						</>
 					) : (
 						<button
 							type="button"
