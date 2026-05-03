@@ -9,6 +9,7 @@ import {
 } from "#/lib/nostr/keys";
 import { getNip07Provider } from "#/lib/nostr/nip07";
 import { useAuthStore } from "#/stores/auth-store";
+import { useProfileStore } from "#/stores/profile-store";
 
 type LoginDialogProps = {
 	onClose: () => void;
@@ -19,6 +20,7 @@ export function LoginDialog({ onClose, onPublishEvent }: LoginDialogProps) {
 	const loginWithKeys = useAuthStore((s) => s.loginWithKeys);
 	const loginWithNip07 = useAuthStore((s) => s.loginWithNip07);
 	const loginWithNsec = useAuthStore((s) => s.loginWithNsec);
+	const setProfile = useProfileStore((s) => s.setProfile);
 	const [nsecInput, setNsecInput] = useState("");
 	const [error, setError] = useState("");
 	const [generatedNsec, setGeneratedNsec] = useState("");
@@ -40,6 +42,10 @@ export function LoginDialog({ onClose, onPublishEvent }: LoginDialogProps) {
 				const template = createMetadataEvent({ name: trimmedName });
 				const signedEvent = finalizeEvent(template, secretKeyRef.current);
 				await onPublishEvent(signedEvent);
+				const pubkey = useAuthStore.getState().publicKey;
+				if (pubkey) {
+					setProfile(pubkey, { name: trimmedName });
+				}
 			} catch {
 				setError("プロフィールの保存に失敗しました");
 				return;
