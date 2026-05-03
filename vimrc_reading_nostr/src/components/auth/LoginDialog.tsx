@@ -26,6 +26,7 @@ export function LoginDialog({ onClose, onPublishEvent }: LoginDialogProps) {
 	const [generatedNsec, setGeneratedNsec] = useState("");
 	const secretKeyRef = useRef<Uint8Array | null>(null);
 	const [nameInput, setNameInput] = useState("");
+	const [showNsec, setShowNsec] = useState(false);
 
 	const handleGenerateKeys = () => {
 		const { secretKey, publicKey } = generateKeyPair();
@@ -114,9 +115,17 @@ export function LoginDialog({ onClose, onPublishEvent }: LoginDialogProps) {
 						<p className="mb-2 text-yellow-700 dark:text-yellow-300">
 							この秘密鍵を失うとアカウントを復元できません。
 						</p>
-						<code className="block break-all rounded bg-yellow-100 p-2 text-xs dark:bg-yellow-900/50">
-							{generatedNsec}
-						</code>
+						<button
+							type="button"
+							onClick={() => setShowNsec(!showNsec)}
+							className="block w-full cursor-pointer break-all rounded bg-yellow-100 p-2 text-left text-xs dark:bg-yellow-900/50"
+						>
+							<code>
+								{showNsec
+									? generatedNsec
+									: "●".repeat(20) + " (クリックで表示)"}
+							</code>
+						</button>
 					</div>
 					<button
 						type="button"
