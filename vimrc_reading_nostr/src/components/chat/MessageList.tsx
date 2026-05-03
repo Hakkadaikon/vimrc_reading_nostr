@@ -21,7 +21,7 @@ export function MessageList({
 	const bottomRef = useRef<HTMLDivElement>(null);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const isNearBottomRef = useRef(true);
-	const [initialScrollDone, setInitialScrollDone] = useState(false);
+	const initialScrollDoneRef = useRef(false);
 	const onLoadOlderRef = useRef(onLoadOlder);
 	onLoadOlderRef.current = onLoadOlder;
 
@@ -33,7 +33,11 @@ export function MessageList({
 			const { scrollTop, scrollHeight, clientHeight } = container;
 			isNearBottomRef.current = scrollHeight - scrollTop - clientHeight < 100;
 
-			if (scrollTop === 0 && onLoadOlderRef.current) {
+			if (
+				initialScrollDoneRef.current &&
+				scrollTop <= 1 &&
+				onLoadOlderRef.current
+			) {
 				onLoadOlderRef.current();
 			}
 		};
@@ -42,16 +46,17 @@ export function MessageList({
 		return () => container.removeEventListener("scroll", handleScroll);
 	}, []);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: messages.lengthの変化でスクロールをトリガーする
 	useEffect(() => {
-		if (!initialScrollDone && messages.length > 0) {
+		if (!initialScrollDoneRef.current && messages.length > 0) {
 			bottomRef.current?.scrollIntoView();
-			setInitialScrollDone(true);
+			initialScrollDoneRef.current = true;
 			return;
 		}
 		if (isNearBottomRef.current) {
 			bottomRef.current?.scrollIntoView({ behavior: "smooth" });
 		}
-	}, [messages.length, initialScrollDone]);
+	}, [messages.length]);
 
 	// 過去メッセージ読み込み後、スクロール位置を維持する
 	const prevMessagesLengthRef = useRef(messages.length);
