@@ -64,6 +64,7 @@
 - 読み取り: 全リレーからマージ（重複排除はイベントIDで）
 - 再接続: 指数バックオフ（1s → 2s → 4s → 8s → 16s → 最大30s）
 - フェイルオーバー: 1台落ちても他のリレーで継続
+- リレープール管理: モジュールレベルのシングルトン（ページ遷移で接続を維持）
 
 ### ADR-005: Markdown + シンタックスハイライト (2026-05-03)
 
@@ -83,21 +84,35 @@
 （本番では独自リレー2-3台に置き換え）
 ```
 
+## メッセージ管理アーキテクチャ
+
+```
+[リレー(WebSocket)] → バックグラウンド受信 → localStorage蓄積
+                                                    ↓
+                                              UI表示（50件ずつページング）
+```
+
+- **バックグラウンド同期**: リレープールはモジュールレベルのシングルトン。ページ遷移しても接続を維持し、kind:42を常時受信してlocalStorageに蓄積する
+- **UI表示**: localStorageから最新50件を読み出して表示。無限スクロールで古いメッセージを追加読み込み（localStorage → 不足分のみリレーへ問い合わせ）
+- **PAGE_SIZE**: 50件（UI表示単位）
+- **新着メッセージ**: 500msデバウンスでバッファリング → localStorage追記 + UIにリアルタイム反映
+
 ## ディレクトリ構成
 
 ```
 vimrc_reading_nostr/src/
 ├── routes/              # TanStack Router ファイルベースルーティング
 │   ├── __root.tsx       # ルートレイアウト
-│   └── index.tsx        # メインチャット画面（シングルページ）
+│   ├── index.tsx        # メインチャット画面（シングルページ）
+│   └── settings.tsx     # 設定画面（キャッシュ管理、表示設定）
 ├── components/          # UIコンポーネント
-│   ├── chat/            # チャット関連（MessageList, MessageItem, MessageForm）
-│   ├── auth/            # 認証関連（LoginDialog, ProfileSettings）
-│   └── common/          # 共通UI（Header, Footer, ConnectionStatus）
-├── hooks/               # カスタムReactフック
+│   ├── chat/            # チャット関連（MessageList, MessageItem, MessageForm, ParticipantList）
+│   ├── auth/            # 認証関連（LoginDialog, UserInfo）
+│   └── common/          # 共通UI（ConnectionStatus）
+├── hooks/               # カスタムフック（useRelayPool: シングルトンリレープール管理）
 ├── lib/                 # ユーティリティ・ビジネスロジック
-│   └── nostr/           # Nostrプロトコル関連（relay, events, channel, keys）
-├── stores/              # Zustand ストア定義
+│   └── nostr/           # Nostrプロトコル関連（relay, events, channel, keys, reactions, participants）
+├── stores/              # Zustand ストア定義（auth, message, profile, relay, reaction, settings）
 ├── types/               # TypeScript型定義
 └── styles/              # グローバルスタイル（styles.css）
 ```
