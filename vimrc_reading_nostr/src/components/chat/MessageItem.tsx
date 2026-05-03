@@ -20,14 +20,13 @@ export function MessageItem({
 	onReact,
 	onDelete,
 }: MessageItemProps) {
-	const getDisplayName = useProfileStore((s) => s.getDisplayName);
-	const getProfile = useProfileStore((s) => s.getProfile);
+	// profilesオブジェクトを直接購読し、変更時に再レンダーされるようにする
+	const profile = useProfileStore((s) => s.profiles[message.pubkey]);
+	const displayName = useProfileStore((s) => s.getDisplayName(message.pubkey));
 	const reactionCount = useReactionStore((s) => s.getReactionCount(message.id));
 	const isDeleted = useMessageStore((s) => s.deletedIds.has(message.id));
 	const currentPubkey = useAuthStore((s) => s.publicKey);
 	const isOwn = currentPubkey === message.pubkey;
-	const profile = getProfile(message.pubkey);
-	const displayName = getDisplayName(message.pubkey);
 	const nevent = useMemo(() => encodeNevent(message.id), [message.id]);
 	const time = new Date(message.created_at * 1000);
 	const timeString = time.toLocaleString("ja-JP", {
