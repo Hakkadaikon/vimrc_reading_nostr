@@ -1,7 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { Users, X } from "lucide-react";
 import type { Event } from "nostr-tools/core";
 import { finalizeEvent } from "nostr-tools/pure";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+	type PointerEvent as ReactPointerEvent,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
 import { LoginDialog } from "#/components/auth/LoginDialog";
 import { UserInfo } from "#/components/auth/UserInfo";
 import { MessageForm } from "#/components/chat/MessageForm";
@@ -53,6 +61,9 @@ function ChatPage() {
 	>();
 	const eoseReceivedRef = useRef(false);
 	const [isLoadingMore, setIsLoadingMore] = useState(false);
+	const [showParticipants, setShowParticipants] = useState(false);
+	const [sidebarWidth, setSidebarWidth] = useState(192);
+	const isResizingRef = useRef(false);
 
 	// 起動時にlocalStorageからキャッシュを復元
 	useEffect(() => {
@@ -264,6 +275,32 @@ function ChatPage() {
 		fetchOlderFromRelay(oldest);
 	}, [isLoadingMore, hasMore, setHasMore, fetchOlderFromRelay]);
 
+	// サイドバーリサイズ
+	const handleResizeStart = useCallback(
+		(e: ReactPointerEvent) => {
+			e.preventDefault();
+			isResizingRef.current = true;
+			const startX = e.clientX;
+			const startWidth = sidebarWidth;
+
+			const onMove = (ev: globalThis.PointerEvent) => {
+				const newWidth = Math.max(
+					120,
+					Math.min(400, startWidth + ev.clientX - startX),
+				);
+				setSidebarWidth(newWidth);
+			};
+			const onUp = () => {
+				isResizingRef.current = false;
+				document.removeEventListener("pointermove", onMove);
+				document.removeEventListener("pointerup", onUp);
+			};
+			document.addEventListener("pointermove", onMove);
+			document.addEventListener("pointerup", onUp);
+		},
+		[sidebarWidth],
+	);
+
 	const signAndPublish = useCallback(
 		async (template: ReturnType<typeof createChannelMessageEvent>) => {
 			if (!publicKey) return;
@@ -317,28 +354,38 @@ function ChatPage() {
 	);
 
 	return (
-		<main className="flex h-[calc(100vh-8rem)] flex-col">
-			<div className="flex items-center justify-between border-b border-gray-200 px-4 py-2 dark:border-gray-700">
-				<div className="flex items-center gap-3">
-					<h1 className="text-lg font-bold text-[var(--sea-ink)]">
+		<main className="flex h-dvh flex-col md:h-[calc(100vh-8rem)]">
+			<div className="flex items-center justify-between border-b border-gray-200 px-3 py-2 md:px-4 dark:border-gray-700">
+				<div className="flex items-center gap-2 md:gap-3">
+					<button
+						type="button"
+						onClick={() => setShowParticipants(!showParticipants)}
+						className="rounded p-1 text-[var(--sea-ink-soft)] hover:bg-gray-100 md:hidden dark:hover:bg-gray-800"
+						title="参加者"
+					>
+						<Users className="h-5 w-5" />
+					</button>
+					<h1 className="text-base font-bold text-[var(--sea-ink)] md:text-lg">
 						vimrc読書会
 					</h1>
 					<ConnectionStatus />
 				</div>
-				<div className="flex items-center gap-3">
+				<div className="flex items-center gap-2 md:gap-3">
 					<Link
 						to="/settings"
-						className="text-sm text-[var(--sea-ink-soft)] hover:underline"
+						className="text-xs text-[var(--sea-ink-soft)] hover:underline md:text-sm"
 					>
 						設定
 					</Link>
 					{isLoggedIn ? (
 						<>
-							<UserInfo />
+							<span className="hidden md:inline-flex">
+								<UserInfo />
+							</span>
 							<button
 								type="button"
 								onClick={() => useAuthStore.getState().logout()}
-								className="text-sm text-[var(--sea-ink-soft)] hover:underline"
+								className="text-xs text-[var(--sea-ink-soft)] hover:underline md:text-sm"
 							>
 								ログアウト
 							</button>
@@ -347,7 +394,7 @@ function ChatPage() {
 						<button
 							type="button"
 							onClick={() => setShowLogin(true)}
-							className="rounded-lg bg-[rgba(233,84,32,0.9)] px-4 py-1.5 text-sm font-semibold text-white hover:bg-[rgba(233,84,32,1)]"
+							className="rounded-lg bg-[rgba(233,84,32,0.9)] px-3 py-1 text-xs font-semibold text-white hover:bg-[rgba(233,84,32,1)] md:px-4 md:py-1.5 md:text-sm"
 						>
 							ログイン
 						</button>
@@ -361,10 +408,45 @@ function ChatPage() {
 					<p>メッセージを読み込んでいます...</p>
 				</div>
 			) : (
-				<div className="flex min-h-0 flex-1">
-					<aside className="w-48 flex-shrink-0 border-r border-gray-200 dark:border-gray-700">
+				<div className="relative flex min-h-0 flex-1">
+					{/* モバイル: オーバーレイドロワー */}
+					{showParticipants && (
+						<>
+							{/* biome-ignore lint/a11y/noStaticElementInteractions: 背景オーバーレイのクリックでドロワーを閉じる */}
+							{/* biome-ignore lint/a11y/useKeyWithClickEvents: 背景オーバーレイはキーボード操作不要 */}
+							<div
+								className="fixed inset-0 z-40 bg-black/30 md:hidden"
+								onClick={() => setShowParticipants(false)}
+							/>
+							<aside className="fixed inset-y-0 left-0 z-50 w-64 border-r border-gray-200 bg-white pt-14 md:hidden dark:border-gray-700 dark:bg-gray-900">
+								<div className="flex items-center justify-between border-b border-gray-200 px-3 py-2 dark:border-gray-700">
+									<span className="text-sm font-semibold text-[var(--sea-ink)]">
+										参加者
+									</span>
+									<button
+										type="button"
+										onClick={() => setShowParticipants(false)}
+										className="rounded p-1 text-[var(--sea-ink-soft)] hover:bg-gray-100 dark:hover:bg-gray-800"
+									>
+										<X className="h-4 w-4" />
+									</button>
+								</div>
+								<ParticipantList participantPubkeys={participantPubkeys} />
+							</aside>
+						</>
+					)}
+
+					{/* デスクトップ: リサイズ可能なサイドバー */}
+					<aside
+						className="hidden flex-shrink-0 border-r border-gray-200 md:block dark:border-gray-700"
+						style={{ width: sidebarWidth }}
+					>
 						<ParticipantList participantPubkeys={participantPubkeys} />
 					</aside>
+					<div
+						className="hidden w-1 flex-shrink-0 cursor-col-resize hover:bg-[rgba(233,84,32,0.3)] active:bg-[rgba(233,84,32,0.5)] md:block"
+						onPointerDown={handleResizeStart}
+					/>
 
 					<div className="flex min-w-0 flex-1 flex-col">
 						<MessageList
@@ -378,7 +460,7 @@ function ChatPage() {
 						{isLoggedIn ? (
 							<MessageForm onSubmit={handleSendMessage} />
 						) : (
-							<div className="border-t border-gray-200 p-4 text-center text-sm text-[var(--sea-ink-soft)] dark:border-gray-700">
+							<div className="border-t border-gray-200 p-3 text-center text-xs text-[var(--sea-ink-soft)] md:p-4 md:text-sm dark:border-gray-700">
 								<button
 									type="button"
 									onClick={() => setShowLogin(true)}

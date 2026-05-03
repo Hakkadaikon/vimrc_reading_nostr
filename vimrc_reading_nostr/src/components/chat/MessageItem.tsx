@@ -73,7 +73,7 @@ export function MessageItem({
 	return (
 		<div
 			id={`msg-${message.id}`}
-			className={`group flex gap-3 px-4 py-3 transition-colors ${
+			className={`group flex gap-2 px-3 py-2 transition-colors md:gap-3 md:px-4 md:py-3 ${
 				highlighted
 					? "bg-yellow-50 dark:bg-yellow-900/20"
 					: "hover:bg-gray-50 dark:hover:bg-gray-800/50"
