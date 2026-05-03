@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Users, X } from "lucide-react";
+import { LogIn, Settings, Users, X } from "lucide-react";
 import type { Event } from "nostr-tools/core";
 import { finalizeEvent } from "nostr-tools/pure";
 import {
@@ -377,32 +377,34 @@ function ChatPage() {
 					<ConnectionStatus />
 				</div>
 				<div className="flex items-center gap-2 md:gap-3">
+					{isLoggedIn && (
+						<span className="hidden md:inline-flex">
+							<UserInfo />
+						</span>
+					)}
 					<Link
 						to="/settings"
-						className="rounded px-2 py-1.5 text-xs text-[var(--sea-ink-soft)] hover:bg-gray-100 md:px-2 md:py-1 md:text-sm md:hover:bg-transparent md:hover:underline dark:hover:bg-gray-800 md:dark:hover:bg-transparent"
+						className="rounded p-2 text-[var(--sea-ink-soft)] hover:bg-gray-100 dark:hover:bg-gray-800"
+						title="設定"
 					>
-						設定
+						<Settings className="h-5 w-5" />
 					</Link>
 					{isLoggedIn ? (
-						<>
-							<span className="hidden md:inline-flex">
-								<UserInfo />
-							</span>
-							<button
-								type="button"
-								onClick={() => useAuthStore.getState().logout()}
-								className="rounded px-2 py-1.5 text-xs text-[var(--sea-ink-soft)] hover:bg-gray-100 md:px-2 md:py-1 md:text-sm md:hover:bg-transparent md:hover:underline dark:hover:bg-gray-800 md:dark:hover:bg-transparent"
-							>
-								ログアウト
-							</button>
-						</>
+						<button
+							type="button"
+							onClick={() => useAuthStore.getState().logout()}
+							className="rounded px-2 py-1.5 text-xs text-[var(--sea-ink-soft)] hover:bg-gray-100 md:text-sm dark:hover:bg-gray-800"
+						>
+							ログアウト
+						</button>
 					) : (
 						<button
 							type="button"
 							onClick={() => setShowLogin(true)}
-							className="rounded-lg bg-[rgba(233,84,32,0.9)] px-4 py-2 text-sm font-semibold text-white hover:bg-[rgba(233,84,32,1)] md:px-4 md:py-1.5 md:text-sm"
+							className="rounded p-2 text-[var(--sea-ink-soft)] hover:bg-gray-100 dark:hover:bg-gray-800"
+							title="ログイン"
 						>
-							ログイン
+							<LogIn className="h-5 w-5" />
 						</button>
 					)}
 				</div>
