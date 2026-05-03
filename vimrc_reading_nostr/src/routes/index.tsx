@@ -57,16 +57,16 @@ function ChatPage() {
 				markRequested(pk);
 			}
 
-			// 各pubkeyについて: directory.yabu.me → kind:10002 → リレー特定 → kind:0取得
+			// 接続済みリレープール + directory.yabu.me に並行問い合わせ
 			const promises = unfetched.map(async (pk) => {
-				const profile = await resolveProfile(pk);
+				const profile = await resolveProfile(pk, subscribe);
 				if (profile) {
 					setProfile(pk, profile);
 				}
 			});
 			await Promise.allSettled(promises);
 		},
-		[setProfile, markRequested],
+		[setProfile, markRequested, subscribe],
 	);
 
 	const requestProfile = useCallback(
