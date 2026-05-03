@@ -23,7 +23,7 @@ import { createReactionEvent } from "#/lib/nostr/reactions";
 import { resolveProfile } from "#/lib/nostr/relay-discovery";
 import { useAuthStore } from "#/stores/auth-store";
 import type { NostrMessage } from "#/stores/message-store";
-import { useMessageStore } from "#/stores/message-store";
+import { PAGE_SIZE, useMessageStore } from "#/stores/message-store";
 import { useProfileStore } from "#/stores/profile-store";
 import { useReactionStore } from "#/stores/reaction-store";
 
@@ -41,6 +41,8 @@ function ChatPage() {
 	const setInitialLoading = useMessageStore((s) => s.setInitialLoading);
 	const saveToLocalStorage = useMessageStore((s) => s.saveToLocalStorage);
 	const loadFromLocalStorage = useMessageStore((s) => s.loadFromLocalStorage);
+	const hasMore = useMessageStore((s) => s.hasMore);
+	const setHasMore = useMessageStore((s) => s.setHasMore);
 	const setProfile = useProfileStore((s) => s.setProfile);
 	const markRequested = useProfileStore((s) => s.markRequested);
 	const addReaction = useReactionStore((s) => s.addReaction);
@@ -50,6 +52,7 @@ function ChatPage() {
 		string | undefined
 	>();
 	const eoseReceivedRef = useRef(false);
+	const [isLoadingMore, setIsLoadingMore] = useState(false);
 
 	// 起動時にlocalStorageからキャッシュを復元
 	useEffect(() => {
@@ -134,7 +137,7 @@ function ChatPage() {
 
 	// メッセージ・リアクション・削除の購読
 	useEffect(() => {
-		const filter = createChannelMessageFilter({ limit: 100 });
+		const filter = createChannelMessageFilter({ limit: PAGE_SIZE });
 		const unsub = subscribe(
 			[filter],
 			(event: Event) => {
@@ -185,6 +188,74 @@ function ChatPage() {
 		saveToLocalStorage,
 		setInitialLoading,
 	]);
+
+	// 新メッセージ到着時にlocalStorageへ自動保存（初回ロード完了後）
+	const prevMessageCountRef = useRef(0);
+	useEffect(() => {
+		if (isInitialLoading) return;
+		if (messages.length > prevMessageCountRef.current) {
+			saveToLocalStorage();
+		}
+		prevMessageCountRef.current = messages.length;
+	}, [messages.length, isInitialLoading, saveToLocalStorage]);
+
+	const fetchOlderFromRelay = useCallback(
+		(until: number) => {
+			const filter = createChannelMessageFilter({
+				limit: PAGE_SIZE,
+				until: until,
+			});
+			let received = 0;
+			const unsub = subscribe(
+				[filter],
+				(event: Event) => {
+					const msg = event as NostrMessage;
+					if (!useMessageStore.getState().messageIds.has(msg.id)) {
+						received++;
+					}
+					addMessage(msg);
+					requestProfile(event.pubkey);
+				},
+				() => {
+					if (received === 0) {
+						setHasMore(false);
+					}
+					saveToLocalStorage();
+					setIsLoadingMore(false);
+					unsub();
+				},
+			);
+		},
+		[subscribe, addMessage, requestProfile, saveToLocalStorage, setHasMore],
+	);
+
+	// 過去メッセージの追加読み込み
+	const loadMore = useCallback(() => {
+		if (isLoadingMore || !hasMore) return;
+		setIsLoadingMore(true);
+
+		const oldest = useMessageStore.getState().getOldestTimestamp();
+		if (oldest === undefined) {
+			setHasMore(false);
+			setIsLoadingMore(false);
+			return;
+		}
+
+		// 1. localStorageから取得を試みる
+		const cached = useMessageStore.getState().loadOlderFromLocalStorage(oldest);
+		if (cached.length > 0) {
+			useMessageStore.getState().addMessages(cached);
+			if (cached.length < PAGE_SIZE) {
+				fetchOlderFromRelay(oldest);
+			} else {
+				setIsLoadingMore(false);
+			}
+			return;
+		}
+
+		// 2. localStorageになければリレーから取得
+		fetchOlderFromRelay(oldest);
+	}, [isLoadingMore, hasMore, setHasMore, fetchOlderFromRelay]);
 
 	const signAndPublish = useCallback(
 		async (template: ReturnType<typeof createChannelMessageEvent>) => {
@@ -291,6 +362,8 @@ function ChatPage() {
 					<div className="flex min-w-0 flex-1 flex-col">
 						<MessageList
 							highlightedEventId={highlightedEventId}
+							hasMore={hasMore}
+							onLoadMore={loadMore}
 							onReact={isLoggedIn ? handleReact : undefined}
 							onDelete={isLoggedIn ? handleDelete : undefined}
 						/>

@@ -1,19 +1,25 @@
 import { useEffect, useRef } from "react";
+import InfiniteScroll from "react-infinite-scroll-component";
 import { useMessageStore } from "#/stores/message-store";
 import { MessageItem } from "./MessageItem";
 
 type MessageListProps = {
 	highlightedEventId?: string;
+	hasMore: boolean;
+	onLoadMore: () => void;
 	onReact?: (eventId: string, pubkey: string) => void;
 	onDelete?: (eventId: string) => void;
 };
 
 export function MessageList({
 	highlightedEventId,
+	hasMore,
+	onLoadMore,
 	onReact,
 	onDelete,
 }: MessageListProps) {
 	const messages = useMessageStore((s) => s.messages);
+	const deletedIds = useMessageStore((s) => s.deletedIds);
 	const bottomRef = useRef<HTMLDivElement>(null);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const isNearBottomRef = useRef(true);
@@ -35,7 +41,6 @@ export function MessageList({
 	// biome-ignore lint/correctness/useExhaustiveDependencies: messages.lengthの変化でスクロールをトリガーする
 	useEffect(() => {
 		if (isNearBottomRef.current) {
-			// 初回マウント時は即座にスクロール（アニメーションなし）
 			const behavior = isFirstRenderRef.current ? "instant" : "smooth";
 			isFirstRenderRef.current = false;
 			bottomRef.current?.scrollIntoView({ behavior });
@@ -59,7 +64,10 @@ export function MessageList({
 		}
 	}, [highlightedEventId, messages.length]);
 
-	if (messages.length === 0) {
+	// 削除済みを除外した表示用メッセージ
+	const visibleMessages = messages.filter((msg) => !deletedIds.has(msg.id));
+
+	if (visibleMessages.length === 0) {
 		return (
 			<div className="flex flex-1 items-center justify-center text-[var(--sea-ink-soft)]">
 				<p>メッセージはまだありません</p>
@@ -68,16 +76,39 @@ export function MessageList({
 	}
 
 	return (
-		<div ref={containerRef} className="flex-1 overflow-y-auto">
-			{messages.map((msg) => (
-				<MessageItem
-					key={msg.id}
-					message={msg}
-					highlighted={msg.id === highlightedEventId}
-					onReact={onReact}
-					onDelete={onDelete}
-				/>
-			))}
+		<div
+			ref={containerRef}
+			id="message-scroll-container"
+			className="flex flex-1 flex-col overflow-y-auto"
+		>
+			<InfiniteScroll
+				dataLength={visibleMessages.length}
+				next={onLoadMore}
+				hasMore={hasMore}
+				loader={
+					<div className="flex justify-center py-2 text-sm text-[var(--sea-ink-soft)]">
+						<div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-[rgba(233,84,32,0.9)]" />
+					</div>
+				}
+				endMessage={
+					<p className="py-2 text-center text-xs text-[var(--sea-ink-soft)]">
+						これ以上メッセージはありません
+					</p>
+				}
+				inverse={true}
+				scrollableTarget="message-scroll-container"
+				style={{ display: "flex", flexDirection: "column-reverse" }}
+			>
+				{[...visibleMessages].reverse().map((msg) => (
+					<MessageItem
+						key={msg.id}
+						message={msg}
+						highlighted={msg.id === highlightedEventId}
+						onReact={onReact}
+						onDelete={onDelete}
+					/>
+				))}
+			</InfiniteScroll>
 			<div ref={bottomRef} />
 		</div>
 	);

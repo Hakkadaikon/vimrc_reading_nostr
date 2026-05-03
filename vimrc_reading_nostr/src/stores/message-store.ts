@@ -11,19 +11,24 @@ export type NostrMessage = {
 };
 
 export const MESSAGE_STORAGE_KEY = "vimrc_reading_nostr_messages";
+export const PAGE_SIZE = 100;
 
 type MessageState = {
 	messages: NostrMessage[];
 	messageIds: Set<string>;
 	deletedIds: Set<string>;
 	isInitialLoading: boolean;
+	hasMore: boolean;
 	addMessage: (event: NostrMessage) => void;
 	addMessages: (events: NostrMessage[]) => void;
 	deleteMessage: (eventId: string) => void;
 	clearMessages: () => void;
 	saveToLocalStorage: () => void;
 	loadFromLocalStorage: () => void;
+	loadOlderFromLocalStorage: (until: number) => NostrMessage[];
 	setInitialLoading: (loading: boolean) => void;
+	setHasMore: (hasMore: boolean) => void;
+	getOldestTimestamp: () => number | undefined;
 };
 
 function binaryInsert(
@@ -50,6 +55,7 @@ export const useMessageStore = create<MessageState>((set, get) => ({
 	messageIds: new Set<string>(),
 	deletedIds: new Set<string>(),
 	isInitialLoading: true,
+	hasMore: true,
 
 	addMessage: (event) => {
 		set((state) => {
@@ -69,12 +75,15 @@ export const useMessageStore = create<MessageState>((set, get) => ({
 		set((state) => {
 			let messages = state.messages;
 			const newIds = new Set(state.messageIds);
+			let added = 0;
 			for (const event of events) {
 				if (!newIds.has(event.id)) {
 					newIds.add(event.id);
 					messages = binaryInsert(messages, event);
+					added++;
 				}
 			}
+			if (added === 0) return state;
 			return { messages, messageIds: newIds };
 		});
 	},
@@ -117,7 +126,34 @@ export const useMessageStore = create<MessageState>((set, get) => ({
 		}
 	},
 
+	loadOlderFromLocalStorage: (until: number): NostrMessage[] => {
+		if (typeof window === "undefined") return [];
+		try {
+			const stored = localStorage.getItem(MESSAGE_STORAGE_KEY);
+			if (!stored) return [];
+			const all: NostrMessage[] = JSON.parse(stored);
+			if (!Array.isArray(all)) return [];
+			const { messageIds } = get();
+			return all
+				.filter((e) => e.created_at < until && !messageIds.has(e.id))
+				.sort((a, b) => b.created_at - a.created_at)
+				.slice(0, PAGE_SIZE);
+		} catch {
+			return [];
+		}
+	},
+
 	setInitialLoading: (loading) => {
 		set({ isInitialLoading: loading });
+	},
+
+	setHasMore: (hasMore) => {
+		set({ hasMore });
+	},
+
+	getOldestTimestamp: () => {
+		const { messages } = get();
+		if (messages.length === 0) return undefined;
+		return messages[0].created_at;
 	},
 }));

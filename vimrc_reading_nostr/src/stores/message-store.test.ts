@@ -145,4 +145,62 @@ describe("localStorage キャッシュ", () => {
 		useMessageStore.getState().setInitialLoading(false);
 		expect(useMessageStore.getState().isInitialLoading).toBe(false);
 	});
+
+	it("loadOlderFromLocalStorageでuntil以前の未取得メッセージを返す", () => {
+		const events = [
+			makeEvent("id1", "Old1", 1000),
+			makeEvent("id2", "Old2", 2000),
+			makeEvent("id3", "Recent", 3000),
+		];
+		mockStorage.set(STORAGE_KEY, JSON.stringify(events));
+
+		// id3は既にストアにあるとする
+		useMessageStore.getState().addMessage(makeEvent("id3", "Recent", 3000));
+
+		const older = useMessageStore.getState().loadOlderFromLocalStorage(3000);
+		expect(older).toHaveLength(2);
+		// 新しい順に返される
+		expect(older[0].content).toBe("Old2");
+		expect(older[1].content).toBe("Old1");
+	});
+
+	it("loadOlderFromLocalStorageはlocalStorageが空なら空配列を返す", () => {
+		const older = useMessageStore.getState().loadOlderFromLocalStorage(3000);
+		expect(older).toEqual([]);
+	});
+});
+
+describe("ページネーション", () => {
+	beforeEach(() => {
+		useMessageStore.getState().clearMessages();
+		useMessageStore.setState({ hasMore: true });
+	});
+
+	it("初期状態ではhasMoreがtrueである", () => {
+		expect(useMessageStore.getState().hasMore).toBe(true);
+	});
+
+	it("setHasMoreでhasMoreを変更できる", () => {
+		useMessageStore.getState().setHasMore(false);
+		expect(useMessageStore.getState().hasMore).toBe(false);
+	});
+
+	it("getOldestTimestampが最も古いメッセージのタイムスタンプを返す", () => {
+		useMessageStore.getState().addMessage(makeEvent("id2", "B", 2000));
+		useMessageStore.getState().addMessage(makeEvent("id1", "A", 1000));
+		expect(useMessageStore.getState().getOldestTimestamp()).toBe(1000);
+	});
+
+	it("getOldestTimestampはメッセージが空ならundefinedを返す", () => {
+		expect(useMessageStore.getState().getOldestTimestamp()).toBeUndefined();
+	});
+
+	it("addMessagesで全て重複の場合stateが変わらない", () => {
+		const event = makeEvent("id1", "Hello", 1000);
+		useMessageStore.getState().addMessage(event);
+		const stateBefore = useMessageStore.getState();
+		useMessageStore.getState().addMessages([event]);
+		const stateAfter = useMessageStore.getState();
+		expect(stateBefore.messages).toBe(stateAfter.messages);
+	});
 });
