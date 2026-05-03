@@ -122,12 +122,24 @@ function ChatPage() {
 	}, []);
 
 	const [loadingOlder, setLoadingOlder] = useState(false);
+	const loadingOlderRef = useRef(false);
+	const olderUnsubRef = useRef<(() => void) | null>(null);
 
 	const loadOlderMessages = useCallback(() => {
+		if (loadingOlderRef.current) return;
 		const msgs = useMessageStore.getState().messages;
-		if (msgs.length === 0 || loadingOlder) return;
+		if (msgs.length === 0) return;
 		const oldest = msgs[0];
+		loadingOlderRef.current = true;
 		setLoadingOlder(true);
+
+		const timeoutId = setTimeout(() => {
+			loadingOlderRef.current = false;
+			setLoadingOlder(false);
+			olderUnsubRef.current?.();
+			olderUnsubRef.current = null;
+		}, 5000);
+
 		const unsub = subscribe(
 			[createChannelMessageFilter({ limit: 20, until: oldest.created_at - 1 })],
 			(event: Event) => {
@@ -135,11 +147,15 @@ function ChatPage() {
 				requestProfile(event.pubkey);
 			},
 			() => {
+				clearTimeout(timeoutId);
+				loadingOlderRef.current = false;
 				setLoadingOlder(false);
 				unsub();
+				olderUnsubRef.current = null;
 			},
 		);
-	}, [subscribe, addMessage, requestProfile, loadingOlder]);
+		olderUnsubRef.current = unsub;
+	}, [subscribe, addMessage, requestProfile]);
 
 	// メッセージ・リアクション・削除の購読
 	useEffect(() => {
