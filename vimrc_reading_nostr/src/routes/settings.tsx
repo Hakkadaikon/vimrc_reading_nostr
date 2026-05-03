@@ -4,6 +4,7 @@ import {
 	clearProfileCache,
 	getCacheEntryCount,
 } from "#/lib/nostr/profile-cache";
+import { useMessageStore } from "#/stores/message-store";
 import { useProfileStore } from "#/stores/profile-store";
 import { useSettingsStore } from "#/stores/settings-store";
 
@@ -17,11 +18,15 @@ function SettingsPage() {
 		(s) => s.setGithubPreviewEnabled,
 	);
 
+	const messageCount = useMessageStore((s) => s.messages.length);
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: clearedの変化でキャッシュクリア後に再計算する
 	const cacheEntryCount = useMemo(() => getCacheEntryCount(), [cleared]);
 
 	const handleClearCache = useCallback(() => {
 		clearProfileCache();
 		useProfileStore.getState().clearProfiles();
+		useMessageStore.getState().clearMessages();
 		setCleared(true);
 		setTimeout(() => setCleared(false), 3000);
 	}, []);
@@ -44,7 +49,7 @@ function SettingsPage() {
 						キャッシュ管理
 					</h2>
 					<p className="mb-2 text-sm text-[var(--sea-ink-soft)]">
-						プロフィール（kind:0）とリレーリスト（kind:10002）のlocalStorageキャッシュを管理します。
+						プロフィール・リレーリスト・メッセージのlocalStorageキャッシュを管理します。
 					</p>
 
 					<div className="mb-4 rounded-lg bg-gray-50 p-4 text-sm dark:bg-gray-800">
@@ -54,6 +59,14 @@ function SettingsPage() {
 							</span>
 							<span className="font-mono text-[var(--sea-ink)]">
 								{profileCount}
+							</span>
+						</div>
+						<div className="mt-1 flex justify-between">
+							<span className="text-[var(--sea-ink-soft)]">
+								キャッシュ済みメッセージ数
+							</span>
+							<span className="font-mono text-[var(--sea-ink)]">
+								{messageCount}
 							</span>
 						</div>
 						<div className="mt-1 flex justify-between">

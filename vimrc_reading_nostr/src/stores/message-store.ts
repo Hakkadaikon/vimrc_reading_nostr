@@ -100,6 +100,9 @@ export const useMessageStore = create<MessageState>((set, get) => ({
 	},
 
 	clearMessages: () => {
+		if (typeof window !== "undefined") {
+			localStorage.removeItem(MESSAGE_STORAGE_KEY);
+		}
 		set({
 			messages: [],
 			messageIds: new Set<string>(),
