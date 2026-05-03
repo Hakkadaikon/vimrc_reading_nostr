@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import type { Event } from "nostr-tools/core";
 import { finalizeEvent } from "nostr-tools/pure";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LoginDialog } from "#/components/auth/LoginDialog";
 import { UserInfo } from "#/components/auth/UserInfo";
 import { MessageForm } from "#/components/chat/MessageForm";
 import { MessageList } from "#/components/chat/MessageList";
+import { ParticipantList } from "#/components/chat/ParticipantList";
 import { ConnectionStatus } from "#/components/common/ConnectionStatus";
 import { useRelayPool } from "#/hooks/useRelayPool";
 import { CHANNEL_ID, createChannelMessageFilter } from "#/lib/nostr/channel";
@@ -17,6 +18,7 @@ import {
 } from "#/lib/nostr/events";
 import { getNip07Provider } from "#/lib/nostr/nip07";
 import { decodeNevent } from "#/lib/nostr/nip19";
+import { getTodayParticipants, getTodayRange } from "#/lib/nostr/participants";
 import { createReactionEvent } from "#/lib/nostr/reactions";
 import { resolveProfile } from "#/lib/nostr/relay-discovery";
 import { useAuthStore } from "#/stores/auth-store";
@@ -38,10 +40,17 @@ function ChatPage() {
 	const setProfile = useProfileStore((s) => s.setProfile);
 	const markRequested = useProfileStore((s) => s.markRequested);
 	const addReaction = useReactionStore((s) => s.addReaction);
+	const messages = useMessageStore((s) => s.messages);
 	const [showLogin, setShowLogin] = useState(false);
 	const [highlightedEventId, setHighlightedEventId] = useState<
 		string | undefined
 	>();
+
+	// 当日〜翌AM2:00(JST)の発言者リスト
+	const participantPubkeys = useMemo(() => {
+		const { start, end } = getTodayRange(Math.floor(Date.now() / 1000));
+		return getTodayParticipants(messages, start, end);
+	}, [messages]);
 
 	// プロフィール取得バッチ用
 	const pendingPubkeysRef = useRef<Set<string>>(new Set());
@@ -238,26 +247,34 @@ function ChatPage() {
 				</div>
 			</div>
 
-			<MessageList
-				highlightedEventId={highlightedEventId}
-				onReact={isLoggedIn ? handleReact : undefined}
-				onDelete={isLoggedIn ? handleDelete : undefined}
-			/>
+			<div className="flex min-h-0 flex-1">
+				<aside className="w-48 flex-shrink-0 border-r border-gray-200 dark:border-gray-700">
+					<ParticipantList participantPubkeys={participantPubkeys} />
+				</aside>
 
-			{isLoggedIn ? (
-				<MessageForm onSubmit={handleSendMessage} />
-			) : (
-				<div className="border-t border-gray-200 p-4 text-center text-sm text-[var(--sea-ink-soft)] dark:border-gray-700">
-					<button
-						type="button"
-						onClick={() => setShowLogin(true)}
-						className="text-[rgba(79,184,178,1)] hover:underline"
-					>
-						ログイン
-					</button>
-					するとメッセージを投稿できます
+				<div className="flex min-w-0 flex-1 flex-col">
+					<MessageList
+						highlightedEventId={highlightedEventId}
+						onReact={isLoggedIn ? handleReact : undefined}
+						onDelete={isLoggedIn ? handleDelete : undefined}
+					/>
+
+					{isLoggedIn ? (
+						<MessageForm onSubmit={handleSendMessage} />
+					) : (
+						<div className="border-t border-gray-200 p-4 text-center text-sm text-[var(--sea-ink-soft)] dark:border-gray-700">
+							<button
+								type="button"
+								onClick={() => setShowLogin(true)}
+								className="text-[rgba(79,184,178,1)] hover:underline"
+							>
+								ログイン
+							</button>
+							するとメッセージを投稿できます
+						</div>
+					)}
 				</div>
-			)}
+			</div>
 
 			{showLogin && <LoginDialog onClose={() => setShowLogin(false)} />}
 		</main>
