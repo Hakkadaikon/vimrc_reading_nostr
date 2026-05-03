@@ -8,6 +8,7 @@ import {
 	setCachedProfile,
 	setCachedRelayList,
 } from "./profile-cache";
+import { getRelayUrls } from "./relay-config";
 
 const DIRECTORY_RELAY = "wss://directory.yabu.me";
 
@@ -18,7 +19,6 @@ export function parseRelayListEvent(tags: string[][]): string[] {
 	return tags
 		.filter((tag) => {
 			if (tag[0] !== "r") return false;
-			// マーカーなし（read+write）またはread
 			const marker = tag[2];
 			return !marker || marker === "read";
 		})
@@ -29,7 +29,6 @@ export function parseRelayListEvent(tags: string[][]): string[] {
  * directory.yabu.meからkind:10002（リレーリスト）を取得する
  */
 async function fetchRelayList(pubkey: string): Promise<string[]> {
-	// localStorageキャッシュをチェック
 	const cached = getCachedRelayList(pubkey);
 	if (cached) return cached;
 
@@ -49,7 +48,6 @@ async function fetchRelayList(pubkey: string): Promise<string[]> {
 					},
 				},
 			);
-			// 5秒タイムアウト
 			setTimeout(() => {
 				sub.close();
 				resolve(result);
@@ -106,6 +104,7 @@ async function fetchProfileFromRelay(
  * 1. localStorageキャッシュを確認
  * 2. directory.yabu.meからkind:10002を取得してリレーを特定
  * 3. 特定したリレーからkind:0を取得
+ * 4. 見つからなければ設定リレー（VITE_RELAY_URLS）にフォールバック
  */
 export async function resolveProfile(
 	pubkey: string,
@@ -117,10 +116,19 @@ export async function resolveProfile(
 	// 2. kind:10002でリレーリストを取得
 	const relays = await fetchRelayList(pubkey);
 
-	// 3. 特定したリレーからkind:0を取得（最初に応答したものを使う）
-	const relaysToTry = relays.length > 0 ? relays.slice(0, 3) : [];
+	// 3. kind:10002で特定したリレーからkind:0を取得
+	for (const relayUrl of relays.slice(0, 3)) {
+		const profile = await fetchProfileFromRelay(pubkey, relayUrl);
+		if (profile) {
+			setCachedProfile(pubkey, profile);
+			return profile;
+		}
+	}
 
-	for (const relayUrl of relaysToTry) {
+	// 4. kind:10002が無い or そのリレーからkind:0が取得できなかった場合、
+	//    設定リレーにフォールバック
+	const configuredRelays = getRelayUrls();
+	for (const relayUrl of configuredRelays) {
 		const profile = await fetchProfileFromRelay(pubkey, relayUrl);
 		if (profile) {
 			setCachedProfile(pubkey, profile);
