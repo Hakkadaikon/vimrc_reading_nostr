@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useMessageStore } from "#/stores/message-store";
 import { MessageItem } from "./MessageItem";
 
@@ -23,8 +23,12 @@ export function MessageList({
 	const isNearBottomRef = useRef(true);
 	const initialScrollDoneRef = useRef(false);
 	const onLoadOlderRef = useRef(onLoadOlder);
+	const loadingOlderRef = useRef(loadingOlder);
+	const prevScrollHeightRef = useRef(0);
 	onLoadOlderRef.current = onLoadOlder;
+	loadingOlderRef.current = loadingOlder;
 
+	// スクロール監視（nostter方式: 上部近くでolder発火）
 	useEffect(() => {
 		const container = containerRef.current;
 		if (!container) return;
@@ -33,11 +37,14 @@ export function MessageList({
 			const { scrollTop, scrollHeight, clientHeight } = container;
 			isNearBottomRef.current = scrollHeight - scrollTop - clientHeight < 100;
 
+			// 上部20%領域に入ったら過去メッセージを取得
 			if (
 				initialScrollDoneRef.current &&
-				scrollTop <= 1 &&
+				!loadingOlderRef.current &&
+				scrollTop < clientHeight * 0.2 &&
 				onLoadOlderRef.current
 			) {
+				prevScrollHeightRef.current = scrollHeight;
 				onLoadOlderRef.current();
 			}
 		};
@@ -46,38 +53,36 @@ export function MessageList({
 		return () => container.removeEventListener("scroll", handleScroll);
 	}, []);
 
+	// 初回: 最下部にスクロール / 新着メッセージ時の自動スクロール
 	// biome-ignore lint/correctness/useExhaustiveDependencies: messages.lengthの変化でスクロールをトリガーする
 	useEffect(() => {
+		const container = containerRef.current;
+		if (!container) return;
+
 		if (!initialScrollDoneRef.current && messages.length > 0) {
-			bottomRef.current?.scrollIntoView();
-			initialScrollDoneRef.current = true;
+			requestAnimationFrame(() => {
+				bottomRef.current?.scrollIntoView();
+				initialScrollDoneRef.current = true;
+			});
 			return;
 		}
+
+		// 過去メッセージ追加時: scrollHeight差分でスクロール位置を維持
+		if (prevScrollHeightRef.current > 0) {
+			const newScrollHeight = container.scrollHeight;
+			const diff = newScrollHeight - prevScrollHeightRef.current;
+			if (diff > 0) {
+				container.scrollTop += diff;
+			}
+			prevScrollHeightRef.current = 0;
+			return;
+		}
+
+		// 新着メッセージ: 下端にいれば自動スクロール
 		if (isNearBottomRef.current) {
 			bottomRef.current?.scrollIntoView({ behavior: "smooth" });
 		}
 	}, [messages.length]);
-
-	// 過去メッセージ読み込み後、スクロール位置を維持する
-	const prevMessagesLengthRef = useRef(messages.length);
-	useEffect(() => {
-		const container = containerRef.current;
-		if (
-			container &&
-			messages.length > prevMessagesLengthRef.current &&
-			container.scrollTop === 0
-		) {
-			// 先頭に追加されたメッセージ分だけスクロール位置を下にずらす
-			const addedCount = messages.length - prevMessagesLengthRef.current;
-			const children = container.children;
-			let offsetHeight = 0;
-			for (let i = 0; i < addedCount && i < children.length; i++) {
-				offsetHeight += (children[i] as HTMLElement).offsetHeight;
-			}
-			container.scrollTop = offsetHeight;
-		}
-		prevMessagesLengthRef.current = messages.length;
-	});
 
 	const scrolledToHighlightRef = useRef(false);
 	const prevHighlightIdRef = useRef(highlightedEventId);
