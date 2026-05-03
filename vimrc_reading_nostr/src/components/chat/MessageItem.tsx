@@ -7,6 +7,7 @@ import type { NostrMessage } from "#/stores/message-store";
 import { useMessageStore } from "#/stores/message-store";
 import { useProfileStore } from "#/stores/profile-store";
 import { useReactionStore } from "#/stores/reaction-store";
+import { useSettingsStore } from "#/stores/settings-store";
 import { GitHubCodePreview } from "./GitHubCodePreview";
 
 type MessageItemProps = {
@@ -43,9 +44,11 @@ export function MessageItem({
 		[message.content],
 	);
 
+	const githubPreviewEnabled = useSettingsStore((s) => s.githubPreviewEnabled);
+
 	const githubLinks = useMemo(
-		() => extractGitHubFileLinks(message.content),
-		[message.content],
+		() => (githubPreviewEnabled ? extractGitHubFileLinks(message.content) : []),
+		[message.content, githubPreviewEnabled],
 	);
 
 	if (isDeleted) {

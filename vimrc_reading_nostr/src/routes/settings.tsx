@@ -5,12 +5,17 @@ import {
 	getCacheEntryCount,
 } from "#/lib/nostr/profile-cache";
 import { useProfileStore } from "#/stores/profile-store";
+import { useSettingsStore } from "#/stores/settings-store";
 
 export const Route = createFileRoute("/settings")({ component: SettingsPage });
 
 function SettingsPage() {
 	const [cleared, setCleared] = useState(false);
 	const profileCount = useProfileStore((s) => Object.keys(s.profiles).length);
+	const githubPreviewEnabled = useSettingsStore((s) => s.githubPreviewEnabled);
+	const setGithubPreviewEnabled = useSettingsStore(
+		(s) => s.setGithubPreviewEnabled,
+	);
 
 	const cacheEntryCount = useMemo(() => getCacheEntryCount(), [cleared]);
 
@@ -74,6 +79,28 @@ function SettingsPage() {
 							キャッシュをクリアしました。リロードするとプロフィールが再取得されます。
 						</p>
 					)}
+				</section>
+
+				<section className="mt-6 rounded-2xl border border-gray-200 p-6 dark:border-gray-700">
+					<h2 className="mb-4 text-lg font-semibold text-[var(--sea-ink)]">
+						表示設定
+					</h2>
+					<label className="flex items-center justify-between">
+						<div>
+							<p className="text-sm font-medium text-[var(--sea-ink)]">
+								GitHubコードプレビュー
+							</p>
+							<p className="text-xs text-[var(--sea-ink-soft)]">
+								投稿内のGitHubファイルリンクからソースコードを取得して表示します
+							</p>
+						</div>
+						<input
+							type="checkbox"
+							checked={githubPreviewEnabled}
+							onChange={(e) => setGithubPreviewEnabled(e.target.checked)}
+							className="h-5 w-5 rounded accent-[rgba(79,184,178,0.9)]"
+						/>
+					</label>
 				</section>
 			</div>
 		</main>
