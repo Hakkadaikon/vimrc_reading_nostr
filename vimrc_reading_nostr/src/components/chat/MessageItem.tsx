@@ -1,4 +1,5 @@
-import { useMemo } from "react";
+import { Check, Copy } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
 import { extractGitHubFileLinks } from "#/lib/github";
 import { renderMarkdown } from "#/lib/markdown";
 import { encodeNevent } from "#/lib/nostr/nip19";
@@ -50,6 +51,13 @@ export function MessageItem({
 		() => (githubPreviewEnabled ? extractGitHubFileLinks(message.content) : []),
 		[message.content, githubPreviewEnabled],
 	);
+
+	const [copied, setCopied] = useState(false);
+	const handleCopy = useCallback(async () => {
+		await navigator.clipboard.writeText(message.content);
+		setCopied(true);
+		setTimeout(() => setCopied(false), 2000);
+	}, [message.content]);
 
 	if (isDeleted) {
 		return (
@@ -110,6 +118,18 @@ export function MessageItem({
 					</div>
 				)}
 				<div className="mt-1 flex items-center gap-2">
+					<button
+						type="button"
+						onClick={handleCopy}
+						className="rounded px-1.5 py-0.5 text-gray-500 opacity-0 transition hover:bg-gray-100 group-hover:opacity-100 dark:hover:bg-gray-700"
+						title="コピー"
+					>
+						{copied ? (
+							<Check className="h-3.5 w-3.5 text-green-500" />
+						) : (
+							<Copy className="h-3.5 w-3.5" />
+						)}
+					</button>
 					{onReact && (
 						<button
 							type="button"
