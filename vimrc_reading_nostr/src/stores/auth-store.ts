@@ -1,3 +1,4 @@
+import { bytesToHex, hexToBytes } from "nostr-tools/utils";
 import { create } from "zustand";
 
 export type LoginMethod = "keys" | "nip07" | "nsec";
@@ -10,20 +11,6 @@ type StoredAuth = {
 	secretKey?: string;
 };
 
-function toHex(bytes: Uint8Array): string {
-	return Array.from(bytes)
-		.map((b) => b.toString(16).padStart(2, "0"))
-		.join("");
-}
-
-function fromHex(hex: string): Uint8Array {
-	const bytes = new Uint8Array(hex.length / 2);
-	for (let i = 0; i < hex.length; i += 2) {
-		bytes[i / 2] = Number.parseInt(hex.slice(i, i + 2), 16);
-	}
-	return bytes;
-}
-
 function saveToStorage(
 	publicKey: string,
 	loginMethod: LoginMethod,
@@ -32,7 +19,7 @@ function saveToStorage(
 	if (typeof window === "undefined") return;
 	const data: StoredAuth = { publicKey, loginMethod };
 	if (secretKey) {
-		data.secretKey = toHex(secretKey);
+		data.secretKey = bytesToHex(secretKey);
 	}
 	window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(data));
 }
@@ -50,7 +37,7 @@ export function loadAuthFromStorage(): void {
 		const data: StoredAuth = JSON.parse(raw);
 		if (!data.publicKey || !data.loginMethod) return;
 
-		const secretKey = data.secretKey ? fromHex(data.secretKey) : null;
+		const secretKey = data.secretKey ? hexToBytes(data.secretKey) : null;
 		useAuthStore.setState({
 			publicKey: data.publicKey,
 			loginMethod: data.loginMethod,
