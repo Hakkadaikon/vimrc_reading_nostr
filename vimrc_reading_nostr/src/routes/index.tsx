@@ -49,6 +49,7 @@ function ChatPage() {
 	const [highlightedEventId, setHighlightedEventId] = useState<
 		string | undefined
 	>();
+	const eoseReceivedRef = useRef(false);
 
 	// 起動時にlocalStorageからキャッシュを復元
 	useEffect(() => {
@@ -58,6 +59,7 @@ function ChatPage() {
 	// 当日〜翌AM2:00(JST)の発言者リスト（参照安定化）
 	const prevParticipantsRef = useRef<string[]>([]);
 	const participantPubkeys = useMemo(() => {
+		if (isInitialLoading) return prevParticipantsRef.current;
 		const { start, end } = getTodayRange(Math.floor(Date.now() / 1000));
 		const next = getTodayParticipants(messages, start, end);
 		const prev = prevParticipantsRef.current;
@@ -66,7 +68,7 @@ function ChatPage() {
 		}
 		prevParticipantsRef.current = next;
 		return next;
-	}, [messages]);
+	}, [messages, isInitialLoading]);
 
 	// プロフィール取得バッチ用
 	const pendingPubkeysRef = useRef<Set<string>>(new Set());
@@ -140,7 +142,9 @@ function ChatPage() {
 				requestProfile(event.pubkey);
 			},
 			() => {
-				// EOSE: 全メッセージ受信完了 → localStorageに保存してロード完了
+				// EOSE: リレーごとに発火するため初回のみ処理する
+				if (eoseReceivedRef.current) return;
+				eoseReceivedRef.current = true;
 				saveToLocalStorage();
 				setInitialLoading(false);
 			},

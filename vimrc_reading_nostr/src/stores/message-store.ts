@@ -99,11 +99,13 @@ export const useMessageStore = create<MessageState>((set, get) => ({
 	},
 
 	saveToLocalStorage: () => {
+		if (typeof window === "undefined") return;
 		const { messages } = get();
 		localStorage.setItem(MESSAGE_STORAGE_KEY, JSON.stringify(messages));
 	},
 
 	loadFromLocalStorage: () => {
+		if (typeof window === "undefined") return;
 		try {
 			const stored = localStorage.getItem(MESSAGE_STORAGE_KEY);
 			if (!stored) return;
