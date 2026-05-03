@@ -15,7 +15,8 @@
 | Nostrライブラリ | nostr-tools | 最も広く使われる。NIP-28対応。TypeScript型定義充実。軽量 |
 | 状態管理 | Zustand | 軽量。React外からもアクセス可能（リレーコールバック内等）。TanStack Startと相性良好 |
 | Markdown | marked + DOMPurify | 高速。XSSサニタイズはDOMPurifyで対応 |
-| シンタックスハイライト | highlight.js | 広い言語サポート。Vimscript対応 |
+| シンタックスハイライト（Markdown内） | highlight.js | 広い言語サポート。Vimscript対応 |
+| シンタックスハイライト（GitHubプレビュー） | react-syntax-highlighter | React統合。Prism + oneDarkテーマ |
 
 ## 設計判断の記録
 
@@ -53,6 +54,8 @@
 
 **理由**: 参加者は技術者だがNIP-07拡張を入れていない人もいる。手軽さとセキュリティのバランス
 
+**永続化**: ログイン状態（publicKey, loginMethod, secretKey）はlocalStorageに保存し、ページリロード時に自動復元する。ログアウト時にクリアする
+
 ### ADR-004: リレーサーバー構成 (2026-05-03)
 
 **決定**: 環境変数 `VITE_RELAY_URLS` でカンマ区切りのリレーURLを管理。デフォルト値あり
@@ -64,12 +67,13 @@
 
 ### ADR-005: Markdown + シンタックスハイライト (2026-05-03)
 
-**決定**: marked + DOMPurify + highlight.js
+**決定**: marked + DOMPurify + highlight.js + react-syntax-highlighter
 
 **理由**:
 - marked: 高速で軽量なMarkdownパーサー
 - DOMPurify: XSSサニタイズの定番
 - highlight.js: Vimscript含む広い言語サポート。vimrc読書会ではVim設定ファイルのコード共有が頻出
+- react-syntax-highlighter: GitHubコードプレビュー用。React統合でPrism + oneDarkテーマを使用
 
 ## リレーサーバー構成
 
@@ -103,7 +107,8 @@ vimrc_reading_nostr/src/
 - **シングルページ構成**: チャット画面が常にメイン。ルーティングは最小限
 - **レスポンシブ**: モバイル対応は後回し（SHOULD）。まずデスクトップで動くものを作る
 - **画面構成**:
-  - ヘッダー: チャンネル名 + 接続状態 + ログイン/プロフィール
+  - ヘッダー: チャンネル名 + 接続状態 + 設定リンク + ログイン/プロフィール
+  - 左ペイン: 当日の参加者リスト（JSTで当日0:00〜翌日AM2:00に発言した人のアイコン・名前をnjump.meリンク付きで表示）
   - メイン: メッセージ一覧（時系列、下が最新）
   - フッター: 投稿フォーム（未ログイン時はログインボタン）
 
