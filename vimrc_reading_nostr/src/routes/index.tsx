@@ -37,6 +37,10 @@ function ChatPage() {
 	const loginMethod = useAuthStore((s) => s.loginMethod);
 	const addMessage = useMessageStore((s) => s.addMessage);
 	const deleteMessage = useMessageStore((s) => s.deleteMessage);
+	const isInitialLoading = useMessageStore((s) => s.isInitialLoading);
+	const setInitialLoading = useMessageStore((s) => s.setInitialLoading);
+	const saveToLocalStorage = useMessageStore((s) => s.saveToLocalStorage);
+	const loadFromLocalStorage = useMessageStore((s) => s.loadFromLocalStorage);
 	const setProfile = useProfileStore((s) => s.setProfile);
 	const markRequested = useProfileStore((s) => s.markRequested);
 	const addReaction = useReactionStore((s) => s.addReaction);
@@ -45,6 +49,11 @@ function ChatPage() {
 	const [highlightedEventId, setHighlightedEventId] = useState<
 		string | undefined
 	>();
+
+	// 起動時にlocalStorageからキャッシュを復元
+	useEffect(() => {
+		loadFromLocalStorage();
+	}, [loadFromLocalStorage]);
 
 	// 当日〜翌AM2:00(JST)の発言者リスト（参照安定化）
 	const prevParticipantsRef = useRef<string[]>([]);
@@ -131,7 +140,9 @@ function ChatPage() {
 				requestProfile(event.pubkey);
 			},
 			() => {
-				// EOSE
+				// EOSE: 全メッセージ受信完了 → localStorageに保存してロード完了
+				saveToLocalStorage();
+				setInitialLoading(false);
 			},
 		);
 
@@ -161,7 +172,15 @@ function ChatPage() {
 				batchTimerRef.current = null;
 			}
 		};
-	}, [subscribe, addMessage, addReaction, deleteMessage, requestProfile]);
+	}, [
+		subscribe,
+		addMessage,
+		addReaction,
+		deleteMessage,
+		requestProfile,
+		saveToLocalStorage,
+		setInitialLoading,
+	]);
 
 	const signAndPublish = useCallback(
 		async (template: ReturnType<typeof createChannelMessageEvent>) => {
@@ -254,34 +273,41 @@ function ChatPage() {
 				</div>
 			</div>
 
-			<div className="flex min-h-0 flex-1">
-				<aside className="w-48 flex-shrink-0 border-r border-gray-200 dark:border-gray-700">
-					<ParticipantList participantPubkeys={participantPubkeys} />
-				</aside>
-
-				<div className="flex min-w-0 flex-1 flex-col">
-					<MessageList
-						highlightedEventId={highlightedEventId}
-						onReact={isLoggedIn ? handleReact : undefined}
-						onDelete={isLoggedIn ? handleDelete : undefined}
-					/>
-
-					{isLoggedIn ? (
-						<MessageForm onSubmit={handleSendMessage} />
-					) : (
-						<div className="border-t border-gray-200 p-4 text-center text-sm text-[var(--sea-ink-soft)] dark:border-gray-700">
-							<button
-								type="button"
-								onClick={() => setShowLogin(true)}
-								className="text-[rgba(233,84,32,1)] hover:underline"
-							>
-								ログイン
-							</button>
-							するとメッセージを投稿できます
-						</div>
-					)}
+			{isInitialLoading ? (
+				<div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 text-[var(--sea-ink-soft)]">
+					<div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-[rgba(233,84,32,0.9)]" />
+					<p>メッセージを読み込んでいます...</p>
 				</div>
-			</div>
+			) : (
+				<div className="flex min-h-0 flex-1">
+					<aside className="w-48 flex-shrink-0 border-r border-gray-200 dark:border-gray-700">
+						<ParticipantList participantPubkeys={participantPubkeys} />
+					</aside>
+
+					<div className="flex min-w-0 flex-1 flex-col">
+						<MessageList
+							highlightedEventId={highlightedEventId}
+							onReact={isLoggedIn ? handleReact : undefined}
+							onDelete={isLoggedIn ? handleDelete : undefined}
+						/>
+
+						{isLoggedIn ? (
+							<MessageForm onSubmit={handleSendMessage} />
+						) : (
+							<div className="border-t border-gray-200 p-4 text-center text-sm text-[var(--sea-ink-soft)] dark:border-gray-700">
+								<button
+									type="button"
+									onClick={() => setShowLogin(true)}
+									className="text-[rgba(233,84,32,1)] hover:underline"
+								>
+									ログイン
+								</button>
+								するとメッセージを投稿できます
+							</div>
+						)}
+					</div>
+				</div>
+			)}
 
 			{showLogin && (
 				<LoginDialog

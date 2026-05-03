@@ -17,6 +17,7 @@ export function MessageList({
 	const bottomRef = useRef<HTMLDivElement>(null);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const isNearBottomRef = useRef(true);
+	const isFirstRenderRef = useRef(true);
 
 	useEffect(() => {
 		const container = containerRef.current;
@@ -34,7 +35,10 @@ export function MessageList({
 	// biome-ignore lint/correctness/useExhaustiveDependencies: messages.lengthの変化でスクロールをトリガーする
 	useEffect(() => {
 		if (isNearBottomRef.current) {
-			bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+			// 初回マウント時は即座にスクロール（アニメーションなし）
+			const behavior = isFirstRenderRef.current ? "instant" : "smooth";
+			isFirstRenderRef.current = false;
+			bottomRef.current?.scrollIntoView({ behavior });
 		}
 	}, [messages.length]);
 

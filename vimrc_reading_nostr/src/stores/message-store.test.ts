@@ -1,5 +1,19 @@
-import { beforeEach, describe, expect, it } from "vitest";
+/**
+ * @vitest-environment jsdom
+ */
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useMessageStore } from "./message-store";
+
+// Node 25+のbuilt-in localStorageとjsdomの競合を回避するためモックを使用
+const mockStorage = new Map<string, string>();
+const storageMock = {
+	getItem: vi.fn((key: string) => mockStorage.get(key) ?? null),
+	setItem: vi.fn((key: string, value: string) => mockStorage.set(key, value)),
+	removeItem: vi.fn((key: string) => mockStorage.delete(key)),
+	clear: vi.fn(() => mockStorage.clear()),
+};
+
+vi.stubGlobal("localStorage", storageMock);
 
 const makeEvent = (id: string, content: string, created_at: number) => ({
 	id,
@@ -14,6 +28,8 @@ const makeEvent = (id: string, content: string, created_at: number) => ({
 describe("useMessageStore", () => {
 	beforeEach(() => {
 		useMessageStore.getState().clearMessages();
+		mockStorage.clear();
+		vi.clearAllMocks();
 	});
 
 	it("初期状態ではメッセージが空", () => {
@@ -72,5 +88,61 @@ describe("useMessageStore", () => {
 		useMessageStore.getState().deleteMessage("id1");
 		useMessageStore.getState().clearMessages();
 		expect(useMessageStore.getState().deletedIds.size).toBe(0);
+	});
+});
+
+describe("localStorage キャッシュ", () => {
+	const STORAGE_KEY = "vimrc_reading_nostr_messages";
+
+	beforeEach(() => {
+		useMessageStore.getState().clearMessages();
+		useMessageStore.getState().setInitialLoading(true);
+		mockStorage.clear();
+		vi.clearAllMocks();
+	});
+
+	it("saveToLocalStorageで現在のメッセージをlocalStorageに保存できる", () => {
+		useMessageStore.getState().addMessage(makeEvent("id1", "Hello", 1000));
+		useMessageStore.getState().addMessage(makeEvent("id2", "World", 2000));
+		useMessageStore.getState().saveToLocalStorage();
+
+		const stored = JSON.parse(mockStorage.get(STORAGE_KEY) as string);
+		expect(stored).toHaveLength(2);
+		expect(stored[0].content).toBe("Hello");
+		expect(stored[1].content).toBe("World");
+	});
+
+	it("loadFromLocalStorageでlocalStorageからメッセージを復元できる", () => {
+		const events = [
+			makeEvent("id1", "Cached1", 1000),
+			makeEvent("id2", "Cached2", 2000),
+		];
+		mockStorage.set(STORAGE_KEY, JSON.stringify(events));
+
+		useMessageStore.getState().loadFromLocalStorage();
+		const messages = useMessageStore.getState().messages;
+		expect(messages).toHaveLength(2);
+		expect(messages[0].content).toBe("Cached1");
+		expect(messages[1].content).toBe("Cached2");
+	});
+
+	it("localStorageが空の場合loadFromLocalStorageは何もしない", () => {
+		useMessageStore.getState().loadFromLocalStorage();
+		expect(useMessageStore.getState().messages).toEqual([]);
+	});
+
+	it("localStorageのデータが壊れている場合loadFromLocalStorageは何もしない", () => {
+		mockStorage.set(STORAGE_KEY, "invalid json{{{");
+		useMessageStore.getState().loadFromLocalStorage();
+		expect(useMessageStore.getState().messages).toEqual([]);
+	});
+
+	it("初期状態ではisInitialLoadingがtrueである", () => {
+		expect(useMessageStore.getState().isInitialLoading).toBe(true);
+	});
+
+	it("setInitialLoadingでロード状態を変更できる", () => {
+		useMessageStore.getState().setInitialLoading(false);
+		expect(useMessageStore.getState().isInitialLoading).toBe(false);
 	});
 });

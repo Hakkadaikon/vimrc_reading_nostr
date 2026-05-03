@@ -10,14 +10,20 @@ export type NostrMessage = {
 	sig: string;
 };
 
+export const MESSAGE_STORAGE_KEY = "vimrc_reading_nostr_messages";
+
 type MessageState = {
 	messages: NostrMessage[];
 	messageIds: Set<string>;
 	deletedIds: Set<string>;
+	isInitialLoading: boolean;
 	addMessage: (event: NostrMessage) => void;
 	addMessages: (events: NostrMessage[]) => void;
 	deleteMessage: (eventId: string) => void;
 	clearMessages: () => void;
+	saveToLocalStorage: () => void;
+	loadFromLocalStorage: () => void;
+	setInitialLoading: (loading: boolean) => void;
 };
 
 function binaryInsert(
@@ -39,10 +45,11 @@ function binaryInsert(
 	return result;
 }
 
-export const useMessageStore = create<MessageState>((set) => ({
+export const useMessageStore = create<MessageState>((set, get) => ({
 	messages: [],
 	messageIds: new Set<string>(),
 	deletedIds: new Set<string>(),
+	isInitialLoading: true,
 
 	addMessage: (event) => {
 		set((state) => {
@@ -89,5 +96,26 @@ export const useMessageStore = create<MessageState>((set) => ({
 			messageIds: new Set<string>(),
 			deletedIds: new Set<string>(),
 		});
+	},
+
+	saveToLocalStorage: () => {
+		const { messages } = get();
+		localStorage.setItem(MESSAGE_STORAGE_KEY, JSON.stringify(messages));
+	},
+
+	loadFromLocalStorage: () => {
+		try {
+			const stored = localStorage.getItem(MESSAGE_STORAGE_KEY);
+			if (!stored) return;
+			const events: NostrMessage[] = JSON.parse(stored);
+			if (!Array.isArray(events)) return;
+			get().addMessages(events);
+		} catch {
+			// データが壊れている場合は何もしない
+		}
+	},
+
+	setInitialLoading: (loading) => {
+		set({ isInitialLoading: loading });
 	},
 }));
