@@ -189,14 +189,21 @@ function ChatPage() {
 		setInitialLoading,
 	]);
 
-	// 新メッセージ到着時にlocalStorageへ自動保存（初回ロード完了後）
+	// 新メッセージ到着時にlocalStorageへ自動保存（デバウンス2秒）
+	const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const prevMessageCountRef = useRef(0);
 	useEffect(() => {
 		if (isInitialLoading) return;
-		if (messages.length > prevMessageCountRef.current) {
-			saveToLocalStorage();
+		if (messages.length <= prevMessageCountRef.current) {
+			prevMessageCountRef.current = messages.length;
+			return;
 		}
 		prevMessageCountRef.current = messages.length;
+		if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+		saveTimerRef.current = setTimeout(() => {
+			saveToLocalStorage();
+			saveTimerRef.current = null;
+		}, 2000);
 	}, [messages.length, isInitialLoading, saveToLocalStorage]);
 
 	const fetchOlderFromRelay = useCallback(

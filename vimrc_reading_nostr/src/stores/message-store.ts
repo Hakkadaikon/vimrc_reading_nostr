@@ -50,6 +50,9 @@ function binaryInsert(
 	return result;
 }
 
+// loadOlderFromLocalStorage用のパース結果キャッシュ
+let parsedStorageCache: NostrMessage[] | null = null;
+
 export const useMessageStore = create<MessageState>((set, get) => ({
 	messages: [],
 	messageIds: new Set<string>(),
@@ -103,6 +106,7 @@ export const useMessageStore = create<MessageState>((set, get) => ({
 		if (typeof window !== "undefined") {
 			localStorage.removeItem(MESSAGE_STORAGE_KEY);
 		}
+		parsedStorageCache = null;
 		set({
 			messages: [],
 			messageIds: new Set<string>(),
@@ -114,6 +118,7 @@ export const useMessageStore = create<MessageState>((set, get) => ({
 		if (typeof window === "undefined") return;
 		const { messages } = get();
 		localStorage.setItem(MESSAGE_STORAGE_KEY, JSON.stringify(messages));
+		parsedStorageCache = null;
 	},
 
 	loadFromLocalStorage: () => {
@@ -132,12 +137,15 @@ export const useMessageStore = create<MessageState>((set, get) => ({
 	loadOlderFromLocalStorage: (until: number): NostrMessage[] => {
 		if (typeof window === "undefined") return [];
 		try {
-			const stored = localStorage.getItem(MESSAGE_STORAGE_KEY);
-			if (!stored) return [];
-			const all: NostrMessage[] = JSON.parse(stored);
-			if (!Array.isArray(all)) return [];
+			if (!parsedStorageCache) {
+				const stored = localStorage.getItem(MESSAGE_STORAGE_KEY);
+				if (!stored) return [];
+				const parsed: NostrMessage[] = JSON.parse(stored);
+				if (!Array.isArray(parsed)) return [];
+				parsedStorageCache = parsed;
+			}
 			const { messageIds } = get();
-			return all
+			return parsedStorageCache
 				.filter((e) => e.created_at < until && !messageIds.has(e.id))
 				.sort((a, b) => b.created_at - a.created_at)
 				.slice(0, PAGE_SIZE);

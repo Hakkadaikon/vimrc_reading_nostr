@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { useMessageStore } from "#/stores/message-store";
 import { MessageItem } from "./MessageItem";
@@ -64,8 +64,10 @@ export function MessageList({
 		}
 	}, [highlightedEventId, messages.length]);
 
-	// 削除済みを除外した表示用メッセージ
-	const visibleMessages = messages.filter((msg) => !deletedIds.has(msg.id));
+	const visibleMessages = useMemo(
+		() => messages.filter((msg) => !deletedIds.has(msg.id)),
+		[messages, deletedIds],
+	);
 
 	if (visibleMessages.length === 0) {
 		return (
@@ -99,7 +101,7 @@ export function MessageList({
 				scrollableTarget="message-scroll-container"
 				style={{ display: "flex", flexDirection: "column-reverse" }}
 			>
-				{[...visibleMessages].reverse().map((msg) => (
+				{visibleMessages.toReversed().map((msg) => (
 					<MessageItem
 						key={msg.id}
 						message={msg}
