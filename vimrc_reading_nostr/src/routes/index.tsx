@@ -32,11 +32,7 @@ import { createReactionEvent } from "#/lib/nostr/reactions";
 import { resolveProfile } from "#/lib/nostr/relay-discovery";
 import { useAuthStore } from "#/stores/auth-store";
 import type { NostrMessage } from "#/stores/message-store";
-import {
-	appendToStorage,
-	PAGE_SIZE,
-	useMessageStore,
-} from "#/stores/message-store";
+import { PAGE_SIZE, useMessageStore } from "#/stores/message-store";
 import { useProfileStore } from "#/stores/profile-store";
 import { useReactionStore } from "#/stores/reaction-store";
 
@@ -81,10 +77,9 @@ function ChatPage() {
 		if (bgBufferRef.current.length === 0) return;
 		const events = bgBufferRef.current;
 		bgBufferRef.current = [];
-		// localStorageに追記
-		appendToStorage(events);
-		// UIにもリアルタイム反映
-		useMessageStore.getState().addMessages(events);
+		const store = useMessageStore.getState();
+		store.appendAndPersist(events);
+		store.addMessages(events);
 	}, []);
 
 	const enqueueBgEvent = useCallback(
@@ -243,22 +238,20 @@ function ChatPage() {
 				limit: PAGE_SIZE,
 				until: until,
 			});
-			let received = 0;
+			const batch: NostrMessage[] = [];
 			const unsub = subscribe(
 				[filter],
 				(event: Event) => {
 					const msg = event as NostrMessage;
-					if (!useMessageStore.getState().messageIds.has(msg.id)) {
-						received++;
-					}
-					// localStorageに保存しつつUIにも追加
-					appendToStorage([msg]);
+					batch.push(msg);
 					addMessage(msg);
 					requestProfile(event.pubkey);
 				},
 				() => {
-					if (received === 0) {
+					if (batch.length === 0) {
 						setHasMore(false);
+					} else {
+						useMessageStore.getState().appendAndPersist(batch);
 					}
 					setIsLoadingMore(false);
 					unsub();

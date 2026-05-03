@@ -14,7 +14,6 @@ export const MESSAGE_STORAGE_KEY = "vimrc_reading_nostr_messages";
 export const PAGE_SIZE = 50;
 
 type MessageState = {
-	// UIに表示中のメッセージ（ページング管理）
 	messages: NostrMessage[];
 	messageIds: Set<string>;
 	deletedIds: Set<string>;
@@ -27,13 +26,12 @@ type MessageState = {
 	setInitialLoading: (loading: boolean) => void;
 	setHasMore: (hasMore: boolean) => void;
 	getOldestTimestamp: () => number | undefined;
-	// localStorage操作
 	saveToLocalStorage: () => void;
 	loadFromLocalStorage: () => void;
-	// ページング: localStorageから最新N件を読み出してUIに反映
 	loadLatestPage: () => void;
-	// ページング: localStorageからuntilより古いN件を読み出し
 	loadOlderPage: (until: number) => NostrMessage[];
+	// localStorageにイベントを追記（バッチ対応）
+	appendAndPersist: (events: NostrMessage[]) => void;
 };
 
 function binaryInsert(
@@ -55,7 +53,6 @@ function binaryInsert(
 	return result;
 }
 
-// localStorage全件のパースキャッシュ
 let parsedStorageCache: NostrMessage[] | null = null;
 
 function getAllFromStorage(): NostrMessage[] {
@@ -73,33 +70,10 @@ function getAllFromStorage(): NostrMessage[] {
 	}
 }
 
-function saveAllToStorage(messages: NostrMessage[]) {
+function scheduleWrite(data: NostrMessage[]) {
 	if (typeof window === "undefined") return;
 	const doSave = () => {
-		localStorage.setItem(MESSAGE_STORAGE_KEY, JSON.stringify(messages));
-		parsedStorageCache = null;
-	};
-	if ("requestIdleCallback" in window) {
-		requestIdleCallback(doSave);
-	} else {
-		setTimeout(doSave, 0);
-	}
-}
-
-// localStorageにイベントを追記（既存のものとマージ）
-export function appendToStorage(events: NostrMessage[]) {
-	if (typeof window === "undefined") return;
-	if (events.length === 0) return;
-	const all = getAllFromStorage();
-	const existingIds = new Set(all.map((m) => m.id));
-	const newEvents = events.filter((e) => !existingIds.has(e.id));
-	if (newEvents.length === 0) return;
-	const merged = [...all, ...newEvents].sort(
-		(a, b) => a.created_at - b.created_at,
-	);
-	parsedStorageCache = merged;
-	const doSave = () => {
-		localStorage.setItem(MESSAGE_STORAGE_KEY, JSON.stringify(merged));
+		localStorage.setItem(MESSAGE_STORAGE_KEY, JSON.stringify(data));
 	};
 	if ("requestIdleCallback" in window) {
 		requestIdleCallback(doSave);
@@ -171,18 +145,17 @@ export const useMessageStore = create<MessageState>((set, get) => ({
 
 	saveToLocalStorage: () => {
 		const messages = get().messages;
-		saveAllToStorage(messages);
+		parsedStorageCache = null;
+		scheduleWrite(messages);
 	},
 
 	loadFromLocalStorage: () => {
-		// 初回ロード: localStorageから最新PAGE_SIZE件をUI表示用に読み込む
 		get().loadLatestPage();
 	},
 
 	loadLatestPage: () => {
 		const all = getAllFromStorage();
 		if (all.length === 0) return;
-		// 最新PAGE_SIZE件を取得（配列はcreated_at昇順）
 		const latest = all.slice(-PAGE_SIZE);
 		const hasMore = all.length > PAGE_SIZE;
 		const newIds = new Set(latest.map((m) => m.id));
@@ -197,10 +170,25 @@ export const useMessageStore = create<MessageState>((set, get) => ({
 	loadOlderPage: (until: number): NostrMessage[] => {
 		const all = getAllFromStorage();
 		const { messageIds } = get();
-		return all
-			.filter((e) => e.created_at < until && !messageIds.has(e.id))
-			.sort((a, b) => b.created_at - a.created_at)
-			.slice(0, PAGE_SIZE);
+		// allは既にcreated_at昇順。filterで順序維持されるのでslice末尾がuntil直前の最新
+		const older = all.filter(
+			(e) => e.created_at < until && !messageIds.has(e.id),
+		);
+		// 末尾からPAGE_SIZE件（最新に近い方を優先）
+		return older.slice(-PAGE_SIZE).reverse();
+	},
+
+	appendAndPersist: (events) => {
+		if (events.length === 0) return;
+		const all = getAllFromStorage();
+		const existingIds = new Set(all.map((m) => m.id));
+		const newEvents = events.filter((e) => !existingIds.has(e.id));
+		if (newEvents.length === 0) return;
+		const merged = [...all, ...newEvents].sort(
+			(a, b) => a.created_at - b.created_at,
+		);
+		parsedStorageCache = merged;
+		scheduleWrite(merged);
 	},
 
 	setInitialLoading: (loading) => {
