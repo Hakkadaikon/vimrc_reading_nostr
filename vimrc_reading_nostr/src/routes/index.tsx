@@ -3,6 +3,7 @@ import { LogIn, LogOut, Settings, Users, X } from "lucide-react";
 import type { Event } from "nostr-tools/core";
 import { finalizeEvent } from "nostr-tools/pure";
 import {
+	memo,
 	type PointerEvent as ReactPointerEvent,
 	useCallback,
 	useEffect,
@@ -307,6 +308,12 @@ function ChatPage() {
 		};
 	}, []);
 
+	const toggleParticipants = useCallback(
+		() => setShowParticipants((prev) => !prev),
+		[],
+	);
+	const openLogin = useCallback(() => setShowLogin(true), []);
+
 	const signAndPublish = useCallback(
 		async (template: ReturnType<typeof createChannelMessageEvent>) => {
 			if (!publicKey) return;
@@ -361,55 +368,11 @@ function ChatPage() {
 
 	return (
 		<main className="flex h-dvh flex-col md:h-[calc(100vh-8rem)]">
-			<div className="flex items-center justify-between border-b border-gray-200 px-3 py-2 md:px-4 dark:border-gray-700">
-				<div className="flex items-center gap-2 md:gap-3">
-					<button
-						type="button"
-						onClick={() => setShowParticipants(!showParticipants)}
-						className="rounded p-2 text-[var(--sea-ink-soft)] hover:bg-gray-100 md:hidden dark:hover:bg-gray-800"
-						title="参加者"
-					>
-						<Users className="h-5 w-5" />
-					</button>
-					<h1 className="text-base font-bold text-[var(--sea-ink)] md:text-lg">
-						vimrc読書会
-					</h1>
-					<ConnectionStatus />
-				</div>
-				<div className="flex items-center gap-2 md:gap-3">
-					{isLoggedIn && (
-						<span className="hidden md:inline-flex">
-							<UserInfo />
-						</span>
-					)}
-					<Link
-						to="/settings"
-						className="rounded p-2 text-[var(--sea-ink-soft)] hover:bg-gray-100 dark:hover:bg-gray-800"
-						title="設定"
-					>
-						<Settings className="h-5 w-5" />
-					</Link>
-					{isLoggedIn ? (
-						<button
-							type="button"
-							onClick={() => useAuthStore.getState().logout()}
-							className="rounded p-2 text-[var(--sea-ink-soft)] hover:bg-gray-100 dark:hover:bg-gray-800"
-							title="ログアウト"
-						>
-							<LogOut className="h-5 w-5" />
-						</button>
-					) : (
-						<button
-							type="button"
-							onClick={() => setShowLogin(true)}
-							className="rounded p-2 text-[var(--sea-ink-soft)] hover:bg-gray-100 dark:hover:bg-gray-800"
-							title="ログイン"
-						>
-							<LogIn className="h-5 w-5" />
-						</button>
-					)}
-				</div>
-			</div>
+			<ChatHeader
+				isLoggedIn={isLoggedIn}
+				onToggleParticipants={toggleParticipants}
+				onShowLogin={openLogin}
+			/>
 
 			{isInitialLoading ? (
 				<div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 text-[var(--sea-ink-soft)]">
@@ -493,3 +456,67 @@ function ChatPage() {
 		</main>
 	);
 }
+
+type ChatHeaderProps = {
+	isLoggedIn: boolean;
+	onToggleParticipants: () => void;
+	onShowLogin: () => void;
+};
+
+const ChatHeader = memo(function ChatHeader({
+	isLoggedIn,
+	onToggleParticipants,
+	onShowLogin,
+}: ChatHeaderProps) {
+	return (
+		<div className="relative z-50 flex items-center justify-between border-b border-gray-200 bg-white px-3 py-2 md:px-4 dark:border-gray-700 dark:bg-gray-900">
+			<div className="flex items-center gap-2 md:gap-3">
+				<button
+					type="button"
+					onClick={onToggleParticipants}
+					className="rounded p-2 text-[var(--sea-ink-soft)] hover:bg-gray-100 md:hidden dark:hover:bg-gray-800"
+					title="参加者"
+				>
+					<Users className="h-5 w-5" />
+				</button>
+				<h1 className="text-base font-bold text-[var(--sea-ink)] md:text-lg">
+					vimrc読書会
+				</h1>
+				<ConnectionStatus />
+			</div>
+			<div className="flex items-center gap-2 md:gap-3">
+				{isLoggedIn && (
+					<span className="hidden md:inline-flex">
+						<UserInfo />
+					</span>
+				)}
+				<Link
+					to="/settings"
+					className="rounded p-2 text-[var(--sea-ink-soft)] hover:bg-gray-100 dark:hover:bg-gray-800"
+					title="設定"
+				>
+					<Settings className="h-5 w-5" />
+				</Link>
+				{isLoggedIn ? (
+					<button
+						type="button"
+						onClick={() => useAuthStore.getState().logout()}
+						className="rounded p-2 text-[var(--sea-ink-soft)] hover:bg-gray-100 dark:hover:bg-gray-800"
+						title="ログアウト"
+					>
+						<LogOut className="h-5 w-5" />
+					</button>
+				) : (
+					<button
+						type="button"
+						onClick={onShowLogin}
+						className="rounded p-2 text-[var(--sea-ink-soft)] hover:bg-gray-100 dark:hover:bg-gray-800"
+						title="ログイン"
+					>
+						<LogIn className="h-5 w-5" />
+					</button>
+				)}
+			</div>
+		</div>
+	);
+});

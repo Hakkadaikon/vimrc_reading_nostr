@@ -116,9 +116,17 @@ export const useMessageStore = create<MessageState>((set, get) => ({
 
 	saveToLocalStorage: () => {
 		if (typeof window === "undefined") return;
-		const { messages } = get();
-		localStorage.setItem(MESSAGE_STORAGE_KEY, JSON.stringify(messages));
-		parsedStorageCache = null;
+		const messages = get().messages;
+		const doSave = () => {
+			localStorage.setItem(MESSAGE_STORAGE_KEY, JSON.stringify(messages));
+			parsedStorageCache = null;
+		};
+		// メインスレッドがアイドル時に保存してUIブロックを回避
+		if ("requestIdleCallback" in window) {
+			requestIdleCallback(doSave);
+		} else {
+			setTimeout(doSave, 0);
+		}
 	},
 
 	loadFromLocalStorage: () => {

@@ -14,6 +14,8 @@ const storageMock = {
 };
 
 vi.stubGlobal("localStorage", storageMock);
+// saveToLocalStorageのrequestIdleCallbackを同期実行にモック
+vi.stubGlobal("requestIdleCallback", (cb: () => void) => cb());
 
 const makeEvent = (id: string, content: string, created_at: number) => ({
 	id,
