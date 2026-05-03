@@ -26,7 +26,7 @@ describe("useProfileStore", () => {
 		expect(profile).toBeUndefined();
 	});
 
-	it("表示名を取得できる（nameがあればname、なければnpub短縮）", () => {
+	it("表示名を取得できる（nameがあればname、なければpubkey短縮）", () => {
 		useProfileStore.getState().setProfile("pubkey1", { name: "Alice" });
 		expect(useProfileStore.getState().getDisplayName("pubkey1")).toBe("Alice");
 	});
@@ -37,5 +37,33 @@ describe("useProfileStore", () => {
 			.getState()
 			.getDisplayName("a".repeat(64));
 		expect(displayName.length).toBeLessThan(64);
+	});
+
+	it("未取得のpubkeyをneedsFetch判定できる", () => {
+		expect(useProfileStore.getState().needsFetch("pubkey1")).toBe(true);
+	});
+
+	it("取得リクエスト済みのpubkeyはneedsFetchがfalse", () => {
+		useProfileStore.getState().markRequested("pubkey1");
+		expect(useProfileStore.getState().needsFetch("pubkey1")).toBe(false);
+	});
+
+	it("プロフィール設定済みのpubkeyもneedsFetchがfalse", () => {
+		useProfileStore.getState().setProfile("pubkey1", { name: "Alice" });
+		expect(useProfileStore.getState().needsFetch("pubkey1")).toBe(false);
+	});
+
+	it("未取得のpubkeyを一括で取得できる", () => {
+		useProfileStore.getState().markRequested("pubkey1");
+		const needed = useProfileStore
+			.getState()
+			.getUnfetchedPubkeys(["pubkey1", "pubkey2", "pubkey3"]);
+		expect(needed).toEqual(["pubkey2", "pubkey3"]);
+	});
+
+	it("clearProfilesで取得済みフラグもクリアされる", () => {
+		useProfileStore.getState().markRequested("pubkey1");
+		useProfileStore.getState().clearProfiles();
+		expect(useProfileStore.getState().needsFetch("pubkey1")).toBe(true);
 	});
 });

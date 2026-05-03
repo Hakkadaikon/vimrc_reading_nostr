@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type { Event } from "nostr-tools/core";
 import { finalizeEvent } from "nostr-tools/pure";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { LoginDialog } from "#/components/auth/LoginDialog";
 import { MessageForm } from "#/components/chat/MessageForm";
 import { MessageList } from "#/components/chat/MessageList";
@@ -35,11 +35,54 @@ function ChatPage() {
 	const addMessage = useMessageStore((s) => s.addMessage);
 	const deleteMessage = useMessageStore((s) => s.deleteMessage);
 	const setProfile = useProfileStore((s) => s.setProfile);
+	const markRequested = useProfileStore((s) => s.markRequested);
 	const addReaction = useReactionStore((s) => s.addReaction);
 	const [showLogin, setShowLogin] = useState(false);
 	const [highlightedEventId, setHighlightedEventId] = useState<
 		string | undefined
 	>();
+
+	// プロフィール取得バッチ用 — 未取得pubkeyを貯めて一括リクエスト
+	const pendingPubkeysRef = useRef<Set<string>>(new Set());
+	const batchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+	const fetchProfiles = useCallback(
+		(pubkeys: string[]) => {
+			const unfetched = pubkeys.filter((pk) =>
+				useProfileStore.getState().needsFetch(pk),
+			);
+			if (unfetched.length === 0) return;
+
+			for (const pk of unfetched) {
+				markRequested(pk);
+			}
+
+			subscribe([{ kinds: [0], authors: unfetched }], (event: Event) => {
+				const profile = parseProfileMetadata(event.content);
+				if (profile) {
+					setProfile(event.pubkey, profile);
+				}
+			});
+		},
+		[subscribe, setProfile, markRequested],
+	);
+
+	// pubkeyをバッチに追加し、50ms後にまとめてリクエスト
+	const requestProfile = useCallback(
+		(pubkey: string) => {
+			if (!useProfileStore.getState().needsFetch(pubkey)) return;
+			pendingPubkeysRef.current.add(pubkey);
+
+			if (batchTimerRef.current) return;
+			batchTimerRef.current = setTimeout(() => {
+				const pubkeys = [...pendingPubkeysRef.current];
+				pendingPubkeysRef.current.clear();
+				batchTimerRef.current = null;
+				fetchProfiles(pubkeys);
+			}, 50);
+		},
+		[fetchProfiles],
+	);
 
 	// URLからPermalink解析
 	useEffect(() => {
@@ -53,25 +96,20 @@ function ChatPage() {
 		}
 	}, []);
 
-	// メッセージ・プロフィール・リアクション・削除の購読
+	// メッセージ・リアクション・削除の購読
 	useEffect(() => {
 		const filter = createChannelMessageFilter({ limit: 100 });
 		const unsub = subscribe(
 			[filter],
 			(event: Event) => {
 				addMessage(event as NostrMessage);
+				// メッセージ投稿者のプロフィールを取得
+				requestProfile(event.pubkey);
 			},
 			() => {
 				// EOSE
 			},
 		);
-
-		const profileUnsub = subscribe([{ kinds: [0] }], (event: Event) => {
-			const profile = parseProfileMetadata(event.content);
-			if (profile) {
-				setProfile(event.pubkey, profile);
-			}
-		});
 
 		const reactionUnsub = subscribe([{ kinds: [7] }], (event: Event) => {
 			const targetId = getETag(event.tags);
@@ -92,11 +130,14 @@ function ChatPage() {
 
 		return () => {
 			unsub();
-			profileUnsub();
 			reactionUnsub();
 			deleteUnsub();
+			if (batchTimerRef.current) {
+				clearTimeout(batchTimerRef.current);
+				batchTimerRef.current = null;
+			}
 		};
-	}, [subscribe, addMessage, setProfile, addReaction, deleteMessage]);
+	}, [subscribe, addMessage, addReaction, deleteMessage, requestProfile]);
 
 	const signAndPublish = useCallback(
 		async (template: ReturnType<typeof createChannelMessageEvent>) => {
