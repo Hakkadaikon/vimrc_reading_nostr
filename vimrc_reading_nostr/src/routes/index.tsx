@@ -150,9 +150,11 @@ function ChatPage() {
 	// メッセージ・リアクション・削除の購読
 	useEffect(() => {
 		const filter = createChannelMessageFilter({ limit: PAGE_SIZE });
+		let receivedCount = 0;
 		const unsub = subscribe(
 			[filter],
 			(event: Event) => {
+				receivedCount++;
 				addMessage(event as NostrMessage);
 				requestProfile(event.pubkey);
 			},
@@ -160,6 +162,10 @@ function ChatPage() {
 				// EOSE: リレーごとに発火するため初回のみ処理する
 				if (eoseReceivedRef.current) return;
 				eoseReceivedRef.current = true;
+				// 受信数 < PAGE_SIZE なら過去メッセージは存在しない
+				if (receivedCount < PAGE_SIZE) {
+					setHasMore(false);
+				}
 				saveToLocalStorage();
 				setInitialLoading(false);
 			},
@@ -199,6 +205,7 @@ function ChatPage() {
 		requestProfile,
 		saveToLocalStorage,
 		setInitialLoading,
+		setHasMore,
 	]);
 
 	// 新メッセージ到着時にlocalStorageへ自動保存（デバウンス2秒）

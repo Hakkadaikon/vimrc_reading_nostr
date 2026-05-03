@@ -69,6 +69,23 @@ export function MessageList({
 		[messages, deletedIds],
 	);
 
+	// コンテンツがコンテナに収まる場合、スクロールイベントが発生しないため
+	// hasMore=true なら自動的にloadMoreを呼び出す
+	// biome-ignore lint/correctness/useExhaustiveDependencies: visibleMessages.lengthの変化でscrollHeight再チェックが必要
+	useEffect(() => {
+		const container = containerRef.current;
+		if (!container || !hasMore) return;
+		// コンテナがスクロール不可（コンテンツ <= コンテナ高さ）ならloadMore
+		const check = () => {
+			if (container.scrollHeight <= container.clientHeight) {
+				onLoadMore();
+			}
+		};
+		// レイアウト確定後にチェック
+		const raf = requestAnimationFrame(check);
+		return () => cancelAnimationFrame(raf);
+	}, [visibleMessages.length, hasMore, onLoadMore]);
+
 	if (visibleMessages.length === 0) {
 		return (
 			<div className="flex flex-1 items-center justify-center text-[var(--sea-ink-soft)]">
