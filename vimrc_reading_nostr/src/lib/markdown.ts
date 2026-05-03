@@ -11,16 +11,20 @@ marked.setOptions({
 	},
 });
 
+function escapeHtml(text: string): string {
+	return text
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#39;");
+}
+
 export function renderMarkdown(content: string): string {
-	const html = marked.parse(content, { async: false }) as string;
+	const escaped = escapeHtml(content);
+	const html = marked.parse(escaped, { async: false }) as string;
 	if (typeof window !== "undefined" && typeof window.document !== "undefined") {
 		return DOMPurify.sanitize(html);
 	}
-	// SSR環境: scriptタグ・イベントハンドラを除去（フォールバック）
-	return html
-		.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
-		.replace(/<iframe\b[^>]*>.*?<\/iframe>/gi, "")
-		.replace(/\s*on\w+\s*=\s*"[^"]*"/gi, "")
-		.replace(/\s*on\w+\s*=\s*'[^']*'/gi, "")
-		.replace(/javascript\s*:/gi, "");
+	return html;
 }

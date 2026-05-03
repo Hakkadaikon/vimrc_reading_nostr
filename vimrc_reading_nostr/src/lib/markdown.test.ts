@@ -49,9 +49,9 @@ describe("renderMarkdown", () => {
 		expect(result).not.toContain("javascript:");
 	});
 
-	it("onloadイベントハンドラを除去する", () => {
+	it("onloadイベントハンドラが実行不可能になる", () => {
 		const result = renderMarkdown('<div onload="alert(1)">test</div>');
-		expect(result).not.toContain("onload");
+		expect(result).not.toMatch(/<div[^>]+onload/);
 	});
 
 	it("SVG内のscriptを除去する", () => {
