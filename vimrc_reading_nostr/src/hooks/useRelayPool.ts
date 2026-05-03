@@ -171,10 +171,57 @@ export function useRelayPool() {
 		[],
 	);
 
+	// 一回限りの取得。全リレーにREQを送り、全EOSEが返るかタイムアウトで完了
+	const fetchOnce = useCallback(
+		(
+			filters: Filter[],
+			onEvent: (event: Event) => void,
+			timeoutMs = 5000,
+		): Promise<void> => {
+			return new Promise((resolve) => {
+				const connections = connectionsRef.current;
+				if (connections.length === 0) {
+					resolve();
+					return;
+				}
+
+				let eoseCount = 0;
+				let resolved = false;
+				const subs: Array<{ close: () => void }> = [];
+
+				const done = () => {
+					if (resolved) return;
+					resolved = true;
+					for (const sub of subs) {
+						sub.close();
+					}
+					resolve();
+				};
+
+				const timer = setTimeout(done, timeoutMs);
+
+				for (const conn of connections) {
+					const sub = conn.relay.subscribe(filters, {
+						onevent: onEvent,
+						oneose: () => {
+							eoseCount++;
+							if (eoseCount >= connections.length) {
+								clearTimeout(timer);
+								done();
+							}
+						},
+					});
+					subs.push(sub);
+				}
+			});
+		},
+		[],
+	);
+
 	useEffect(() => {
 		connect();
 		return () => disconnect();
 	}, [connect, disconnect]);
 
-	return { publish, subscribe, ready };
+	return { publish, subscribe, fetchOnce, ready };
 }

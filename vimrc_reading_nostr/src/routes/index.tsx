@@ -30,7 +30,7 @@ import { useReactionStore } from "#/stores/reaction-store";
 export const Route = createFileRoute("/")({ component: ChatPage });
 
 function ChatPage() {
-	const { publish, subscribe } = useRelayPool();
+	const { publish, subscribe, fetchOnce } = useRelayPool();
 	const isLoggedIn = useAuthStore((s) => s.publicKey !== null);
 	const publicKey = useAuthStore((s) => s.publicKey);
 	const secretKey = useAuthStore((s) => s.secretKey);
@@ -123,9 +123,8 @@ function ChatPage() {
 
 	const [loadingOlder, setLoadingOlder] = useState(false);
 	const loadingOlderRef = useRef(false);
-	const olderUnsubRef = useRef<(() => void) | null>(null);
 
-	const loadOlderMessages = useCallback(() => {
+	const loadOlderMessages = useCallback(async () => {
 		if (loadingOlderRef.current) return;
 		const msgs = useMessageStore.getState().messages;
 		if (msgs.length === 0) return;
@@ -133,29 +132,17 @@ function ChatPage() {
 		loadingOlderRef.current = true;
 		setLoadingOlder(true);
 
-		const timeoutId = setTimeout(() => {
-			loadingOlderRef.current = false;
-			setLoadingOlder(false);
-			olderUnsubRef.current?.();
-			olderUnsubRef.current = null;
-		}, 5000);
-
-		const unsub = subscribe(
+		await fetchOnce(
 			[createChannelMessageFilter({ limit: 20, until: oldest.created_at - 1 })],
 			(event: Event) => {
 				addMessage(event as NostrMessage);
 				requestProfile(event.pubkey);
 			},
-			() => {
-				clearTimeout(timeoutId);
-				loadingOlderRef.current = false;
-				setLoadingOlder(false);
-				unsub();
-				olderUnsubRef.current = null;
-			},
 		);
-		olderUnsubRef.current = unsub;
-	}, [subscribe, addMessage, requestProfile]);
+
+		loadingOlderRef.current = false;
+		setLoadingOlder(false);
+	}, [fetchOnce, addMessage, requestProfile]);
 
 	// メッセージ・リアクション・削除の購読
 	useEffect(() => {
