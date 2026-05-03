@@ -47,7 +47,7 @@ export function MessageForm({ onSubmit, disabled }: MessageFormProps) {
 			<button
 				type="submit"
 				disabled={disabled || sending || !content.trim()}
-				className="self-end rounded-lg bg-[rgba(233,84,32,0.9)] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[rgba(233,84,32,1)] disabled:opacity-50 md:px-4 md:py-2 md:text-sm"
+				className="self-center rounded-lg bg-[rgba(233,84,32,0.9)] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[rgba(233,84,32,1)] disabled:opacity-50 md:px-4 md:py-2 md:text-sm"
 			>
 				{sending ? "送信中..." : "投稿"}
 			</button>
