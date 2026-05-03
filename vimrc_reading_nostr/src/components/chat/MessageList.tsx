@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMessageStore } from "#/stores/message-store";
 import { MessageItem } from "./MessageItem";
 
@@ -31,20 +31,29 @@ export function MessageList({
 		return () => container.removeEventListener("scroll", handleScroll);
 	}, []);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: messages.lengthの変化でスクロールをトリガーする
 	useEffect(() => {
 		if (isNearBottomRef.current) {
 			bottomRef.current?.scrollIntoView({ behavior: "smooth" });
 		}
 	}, [messages.length]);
 
+	const [scrolledToHighlight, setScrolledToHighlight] = useState(false);
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: highlightedEventIdの変化でリセットする
 	useEffect(() => {
-		if (highlightedEventId) {
-			const el = document.getElementById(`msg-${highlightedEventId}`);
-			if (el) {
-				el.scrollIntoView({ behavior: "smooth", block: "center" });
-			}
-		}
+		setScrolledToHighlight(false);
 	}, [highlightedEventId]);
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: messagesの変化で該当メッセージのDOM出現を検知する
+	useEffect(() => {
+		if (!highlightedEventId || scrolledToHighlight) return;
+		const el = document.getElementById(`msg-${highlightedEventId}`);
+		if (el) {
+			el.scrollIntoView({ behavior: "smooth", block: "center" });
+			setScrolledToHighlight(true);
+		}
+	}, [highlightedEventId, scrolledToHighlight, messages]);
 
 	if (messages.length === 0) {
 		return (
