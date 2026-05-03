@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { extractGitHubFileLinks } from "#/lib/github";
 import { renderMarkdown } from "#/lib/markdown";
 import { encodeNevent } from "#/lib/nostr/nip19";
 import { useAuthStore } from "#/stores/auth-store";
@@ -6,6 +7,7 @@ import type { NostrMessage } from "#/stores/message-store";
 import { useMessageStore } from "#/stores/message-store";
 import { useProfileStore } from "#/stores/profile-store";
 import { useReactionStore } from "#/stores/reaction-store";
+import { GitHubCodePreview } from "./GitHubCodePreview";
 
 type MessageItemProps = {
 	message: NostrMessage;
@@ -38,6 +40,11 @@ export function MessageItem({
 
 	const html = useMemo(
 		() => renderMarkdown(message.content),
+		[message.content],
+	);
+
+	const githubLinks = useMemo(
+		() => extractGitHubFileLinks(message.content),
 		[message.content],
 	);
 
@@ -92,6 +99,13 @@ export function MessageItem({
 					// biome-ignore lint/security/noDangerouslySetInnerHtml: Markdown rendered and sanitized by renderMarkdown
 					dangerouslySetInnerHTML={{ __html: html }}
 				/>
+				{githubLinks.length > 0 && (
+					<div className="mt-2 space-y-2">
+						{githubLinks.map((link) => (
+							<GitHubCodePreview key={link.url} link={link} />
+						))}
+					</div>
+				)}
 				<div className="mt-1 flex items-center gap-2">
 					{onReact && (
 						<button
