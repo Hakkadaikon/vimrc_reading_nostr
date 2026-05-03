@@ -40,6 +40,22 @@ export function createEditedMessageEvent(
 	};
 }
 
+export type MetadataParams = {
+	name: string;
+	display_name?: string;
+	picture?: string;
+	about?: string;
+};
+
+export function createMetadataEvent(params: MetadataParams): EventTemplate {
+	return {
+		kind: 0,
+		content: JSON.stringify(params),
+		created_at: nowUnix(),
+		tags: [],
+	};
+}
+
 export function createDeleteEvent(eventId: string): EventTemplate {
 	return {
 		kind: 5,

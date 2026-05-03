@@ -4,6 +4,7 @@ import {
 	createChannelMessageEvent,
 	createDeleteEvent,
 	createEditedMessageEvent,
+	createMetadataEvent,
 	verifyEvent,
 } from "./events";
 import { generateKeyPair } from "./keys";
@@ -68,6 +69,20 @@ describe("createDeleteEvent", () => {
 		expect(event.kind).toBe(5);
 		const eTag = event.tags.find((t) => t[0] === "e");
 		expect(eTag?.[1]).toBe("target-event-id");
+	});
+});
+
+describe("createMetadataEvent", () => {
+	it("kind:0のメタデータイベントを作成する", () => {
+		const event = createMetadataEvent({ name: "テストユーザー" });
+		expect(event.kind).toBe(0);
+		const content = JSON.parse(event.content);
+		expect(content.name).toBe("テストユーザー");
+	});
+
+	it("tagsは空配列", () => {
+		const event = createMetadataEvent({ name: "test" });
+		expect(event.tags).toEqual([]);
 	});
 });
 
