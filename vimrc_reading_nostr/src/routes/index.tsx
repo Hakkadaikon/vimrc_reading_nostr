@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { LogIn, Settings, Users, X } from "lucide-react";
+import { LogIn, LogOut, Settings, Users, X } from "lucide-react";
 import type { Event } from "nostr-tools/core";
 import { finalizeEvent } from "nostr-tools/pure";
 import {
@@ -393,9 +393,10 @@ function ChatPage() {
 						<button
 							type="button"
 							onClick={() => useAuthStore.getState().logout()}
-							className="rounded px-2 py-1.5 text-xs text-[var(--sea-ink-soft)] hover:bg-gray-100 md:text-sm dark:hover:bg-gray-800"
+							className="rounded p-2 text-[var(--sea-ink-soft)] hover:bg-gray-100 dark:hover:bg-gray-800"
+							title="ログアウト"
 						>
-							ログアウト
+							<LogOut className="h-5 w-5" />
 						</button>
 					) : (
 						<button
