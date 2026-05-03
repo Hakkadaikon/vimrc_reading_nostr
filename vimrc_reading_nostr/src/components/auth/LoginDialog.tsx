@@ -28,6 +28,7 @@ export function LoginDialog({ onClose, onPublishEvent }: LoginDialogProps) {
 	const [nameInput, setNameInput] = useState("");
 	const [showNsec, setShowNsec] = useState(false);
 	const [copied, setCopied] = useState(false);
+	const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	const handleGenerateKeys = () => {
 		const { secretKey, publicKey } = generateKeyPair();
@@ -135,7 +136,11 @@ export function LoginDialog({ onClose, onPublishEvent }: LoginDialogProps) {
 								onClick={async () => {
 									await navigator.clipboard.writeText(generatedNsec);
 									setCopied(true);
-									setTimeout(() => setCopied(false), 2000);
+									if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+									copyTimerRef.current = setTimeout(
+										() => setCopied(false),
+										2000,
+									);
 								}}
 								className="shrink-0 rounded bg-yellow-200 px-2 text-xs text-yellow-800 hover:bg-yellow-300 dark:bg-yellow-800 dark:text-yellow-200 dark:hover:bg-yellow-700"
 							>
