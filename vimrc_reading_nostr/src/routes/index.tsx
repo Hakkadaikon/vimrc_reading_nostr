@@ -62,8 +62,8 @@ function ChatPage() {
 	const eoseReceivedRef = useRef(false);
 	const [isLoadingMore, setIsLoadingMore] = useState(false);
 	const [showParticipants, setShowParticipants] = useState(false);
-	const [sidebarWidth, setSidebarWidth] = useState(192);
-	const isResizingRef = useRef(false);
+	const sidebarRef = useRef<HTMLElement>(null);
+	const resizeCleanupRef = useRef<(() => void) | null>(null);
 
 	// 起動時にlocalStorageからキャッシュを復元
 	useEffect(() => {
@@ -275,31 +275,37 @@ function ChatPage() {
 		fetchOlderFromRelay(oldest);
 	}, [isLoadingMore, hasMore, setHasMore, fetchOlderFromRelay]);
 
-	// サイドバーリサイズ
-	const handleResizeStart = useCallback(
-		(e: ReactPointerEvent) => {
-			e.preventDefault();
-			isResizingRef.current = true;
-			const startX = e.clientX;
-			const startWidth = sidebarWidth;
+	// サイドバーリサイズ（DOM直接操作で再レンダリングを回避）
+	const handleResizeStart = useCallback((e: ReactPointerEvent) => {
+		e.preventDefault();
+		const sidebar = sidebarRef.current;
+		if (!sidebar) return;
+		const startX = e.clientX;
+		const startWidth = sidebar.offsetWidth;
 
-			const onMove = (ev: globalThis.PointerEvent) => {
-				const newWidth = Math.max(
-					120,
-					Math.min(400, startWidth + ev.clientX - startX),
-				);
-				setSidebarWidth(newWidth);
-			};
-			const onUp = () => {
-				isResizingRef.current = false;
-				document.removeEventListener("pointermove", onMove);
-				document.removeEventListener("pointerup", onUp);
-			};
-			document.addEventListener("pointermove", onMove);
-			document.addEventListener("pointerup", onUp);
-		},
-		[sidebarWidth],
-	);
+		const onMove = (ev: globalThis.PointerEvent) => {
+			const newWidth = Math.max(
+				120,
+				Math.min(400, startWidth + ev.clientX - startX),
+			);
+			sidebar.style.width = `${newWidth}px`;
+		};
+		const onUp = () => {
+			resizeCleanupRef.current = null;
+			document.removeEventListener("pointermove", onMove);
+			document.removeEventListener("pointerup", onUp);
+		};
+		document.addEventListener("pointermove", onMove);
+		document.addEventListener("pointerup", onUp);
+		resizeCleanupRef.current = onUp;
+	}, []);
+
+	// アンマウント時にリサイズリスナーをクリーンアップ
+	useEffect(() => {
+		return () => {
+			resizeCleanupRef.current?.();
+		};
+	}, []);
 
 	const signAndPublish = useCallback(
 		async (template: ReturnType<typeof createChannelMessageEvent>) => {
@@ -438,8 +444,8 @@ function ChatPage() {
 
 					{/* デスクトップ: リサイズ可能なサイドバー */}
 					<aside
-						className="hidden flex-shrink-0 border-r border-gray-200 md:block dark:border-gray-700"
-						style={{ width: sidebarWidth }}
+						ref={sidebarRef}
+						className="hidden w-48 flex-shrink-0 border-r border-gray-200 md:block dark:border-gray-700"
 					>
 						<ParticipantList participantPubkeys={participantPubkeys} />
 					</aside>
