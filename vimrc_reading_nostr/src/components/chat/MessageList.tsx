@@ -82,8 +82,28 @@ export function MessageList({
 	return (
 		<div ref={containerRef} className="flex-1 overflow-y-auto">
 			{loadingOlder && (
-				<div className="py-3 text-center text-sm text-[var(--sea-ink-soft)]">
-					読み込み中...
+				<div className="sticky top-0 z-10 flex items-center justify-center gap-2 bg-[var(--bg-base)] py-3 text-sm text-[var(--sea-ink-soft)] shadow-sm">
+					<svg
+						className="h-4 w-4 animate-spin"
+						viewBox="0 0 24 24"
+						fill="none"
+						aria-hidden="true"
+					>
+						<circle
+							className="opacity-25"
+							cx="12"
+							cy="12"
+							r="10"
+							stroke="currentColor"
+							strokeWidth="4"
+						/>
+						<path
+							className="opacity-75"
+							fill="currentColor"
+							d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+						/>
+					</svg>
+					過去のメッセージを読み込み中...
 				</div>
 			)}
 			{messages.map((msg) => (
