@@ -15,10 +15,13 @@ export function getTodayRange(nowUnix: number): {
 	end: number;
 } {
 	const jstSeconds = nowUnix + JST_OFFSET_SECONDS;
-	const jstDayStart = jstSeconds - (jstSeconds % 86400);
-	const utcDayStart = jstDayStart - JST_OFFSET_SECONDS;
-	const utcNextDay2am = utcDayStart + 26 * 60 * 60; // +26h = 翌日AM2:00 JST
-	return { start: utcDayStart, end: utcNextDay2am };
+	// AM5:00 JST で日付切り替え
+	const BOUNDARY_HOUR = 5;
+	const adjustedJst = jstSeconds - BOUNDARY_HOUR * 3600;
+	const dayStart = adjustedJst - (adjustedJst % 86400);
+	const utcStart = dayStart + BOUNDARY_HOUR * 3600 - JST_OFFSET_SECONDS;
+	const utcEnd = utcStart + 86400;
+	return { start: utcStart, end: utcEnd };
 }
 
 export function getTodayParticipants(
