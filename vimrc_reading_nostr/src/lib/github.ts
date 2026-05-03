@@ -54,22 +54,17 @@ const DOTFILE_LANGUAGE_MAP: Record<string, string> = {
 };
 
 const GITHUB_FILE_URL_PATTERN =
-	/https:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+?)(?:#L(\d+)(?:-L(\d+))?)?(?=\s|$)/g;
+	/https:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+?)(?:#L(\d+)(?:-L(\d+))?)?(?=\s|$)/;
 
 export function getLanguageFromPath(filePath: string): string {
 	const fileName = filePath.split("/").pop() ?? filePath;
 
-	// Check dotfile map
 	if (DOTFILE_LANGUAGE_MAP[fileName]) {
 		return DOTFILE_LANGUAGE_MAP[fileName];
 	}
 
 	const dotIndex = fileName.lastIndexOf(".");
 	if (dotIndex === -1 || dotIndex === 0) {
-		// No extension; for dotfiles not in map, return plaintext
-		if (dotIndex === 0 && !DOTFILE_LANGUAGE_MAP[fileName]) {
-			return "plaintext";
-		}
 		return "plaintext";
 	}
 
