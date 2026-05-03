@@ -2,6 +2,65 @@ import { create } from "zustand";
 
 export type LoginMethod = "keys" | "nip07" | "nsec";
 
+export const AUTH_STORAGE_KEY = "nostr_auth";
+
+type StoredAuth = {
+	publicKey: string;
+	loginMethod: LoginMethod;
+	secretKey?: string;
+};
+
+function toHex(bytes: Uint8Array): string {
+	return Array.from(bytes)
+		.map((b) => b.toString(16).padStart(2, "0"))
+		.join("");
+}
+
+function fromHex(hex: string): Uint8Array {
+	const bytes = new Uint8Array(hex.length / 2);
+	for (let i = 0; i < hex.length; i += 2) {
+		bytes[i / 2] = Number.parseInt(hex.slice(i, i + 2), 16);
+	}
+	return bytes;
+}
+
+function saveToStorage(
+	publicKey: string,
+	loginMethod: LoginMethod,
+	secretKey: Uint8Array | null,
+): void {
+	if (typeof window === "undefined") return;
+	const data: StoredAuth = { publicKey, loginMethod };
+	if (secretKey) {
+		data.secretKey = toHex(secretKey);
+	}
+	window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(data));
+}
+
+function clearStorage(): void {
+	if (typeof window === "undefined") return;
+	window.localStorage.removeItem(AUTH_STORAGE_KEY);
+}
+
+export function loadAuthFromStorage(): void {
+	if (typeof window === "undefined") return;
+	try {
+		const raw = window.localStorage.getItem(AUTH_STORAGE_KEY);
+		if (!raw) return;
+		const data: StoredAuth = JSON.parse(raw);
+		if (!data.publicKey || !data.loginMethod) return;
+
+		const secretKey = data.secretKey ? fromHex(data.secretKey) : null;
+		useAuthStore.setState({
+			publicKey: data.publicKey,
+			loginMethod: data.loginMethod,
+			secretKey,
+		});
+	} catch {
+		clearStorage();
+	}
+}
+
 type AuthState = {
 	publicKey: string | null;
 	secretKey: Uint8Array | null;
@@ -22,17 +81,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
 	loginWithKeys: (secretKey, publicKey) => {
 		set({ secretKey, publicKey, loginMethod: "keys" });
+		saveToStorage(publicKey, "keys", secretKey);
 	},
 
 	loginWithNip07: (publicKey) => {
 		set({ secretKey: null, publicKey, loginMethod: "nip07" });
+		saveToStorage(publicKey, "nip07", null);
 	},
 
 	loginWithNsec: (secretKey, publicKey) => {
 		set({ secretKey, publicKey, loginMethod: "nsec" });
+		saveToStorage(publicKey, "nsec", secretKey);
 	},
 
 	logout: () => {
 		set({ secretKey: null, publicKey: null, loginMethod: null });
+		clearStorage();
 	},
 }));

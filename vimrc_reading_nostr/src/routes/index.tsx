@@ -21,7 +21,7 @@ import { decodeNevent } from "#/lib/nostr/nip19";
 import { getTodayParticipants, getTodayRange } from "#/lib/nostr/participants";
 import { createReactionEvent } from "#/lib/nostr/reactions";
 import { resolveProfile } from "#/lib/nostr/relay-discovery";
-import { useAuthStore } from "#/stores/auth-store";
+import { loadAuthFromStorage, useAuthStore } from "#/stores/auth-store";
 import type { NostrMessage } from "#/stores/message-store";
 import { useMessageStore } from "#/stores/message-store";
 import { useProfileStore } from "#/stores/profile-store";
@@ -41,6 +41,12 @@ function ChatPage() {
 	const markRequested = useProfileStore((s) => s.markRequested);
 	const addReaction = useReactionStore((s) => s.addReaction);
 	const messages = useMessageStore((s) => s.messages);
+
+	// localStorageからログイン状態を復元
+	useEffect(() => {
+		loadAuthFromStorage();
+	}, []);
+
 	const [showLogin, setShowLogin] = useState(false);
 	const [highlightedEventId, setHighlightedEventId] = useState<
 		string | undefined
