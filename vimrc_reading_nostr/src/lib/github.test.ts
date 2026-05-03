@@ -22,7 +22,7 @@ describe("parseGitHubFileUrl", () => {
 			"https://github.com/owner/repo/blob/main/path/to/file.vim",
 		);
 		expect(result!.rawUrl).toBe(
-			"https://raw.githubusercontent.com/owner/repo/main/path/to/file.vim",
+			"https://api.github.com/repos/owner/repo/contents/path/to/file.vim?ref=main",
 		);
 		expect(result!.language).toBe("vim");
 	});

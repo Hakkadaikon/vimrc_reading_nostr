@@ -19,7 +19,10 @@ export function GitHubCodePreview({ link }: GitHubCodePreviewProps) {
 		setError(null);
 		setCode(null);
 
-		fetch(link.rawUrl, { signal: controller.signal })
+		fetch(link.rawUrl, {
+			signal: controller.signal,
+			headers: { Accept: "application/vnd.github.raw+json" },
+		})
 			.then((res) => {
 				if (!res.ok) {
 					throw new Error(`Failed to fetch: ${res.status} ${res.statusText}`);
