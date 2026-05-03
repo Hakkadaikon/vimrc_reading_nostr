@@ -27,6 +27,7 @@ export function LoginDialog({ onClose, onPublishEvent }: LoginDialogProps) {
 	const secretKeyRef = useRef<Uint8Array | null>(null);
 	const [nameInput, setNameInput] = useState("");
 	const [showNsec, setShowNsec] = useState(false);
+	const [copied, setCopied] = useState(false);
 
 	const handleGenerateKeys = () => {
 		const { secretKey, publicKey } = generateKeyPair();
@@ -128,6 +129,17 @@ export function LoginDialog({ onClose, onPublishEvent }: LoginDialogProps) {
 								className="shrink-0 rounded bg-yellow-200 px-2 text-xs text-yellow-800 hover:bg-yellow-300 dark:bg-yellow-800 dark:text-yellow-200 dark:hover:bg-yellow-700"
 							>
 								{showNsec ? "隠す" : "表示"}
+							</button>
+							<button
+								type="button"
+								onClick={async () => {
+									await navigator.clipboard.writeText(generatedNsec);
+									setCopied(true);
+									setTimeout(() => setCopied(false), 2000);
+								}}
+								className="shrink-0 rounded bg-yellow-200 px-2 text-xs text-yellow-800 hover:bg-yellow-300 dark:bg-yellow-800 dark:text-yellow-200 dark:hover:bg-yellow-700"
+							>
+								{copied ? "コピー済" : "コピー"}
 							</button>
 						</div>
 					</div>
