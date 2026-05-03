@@ -283,7 +283,12 @@ function ChatPage() {
 				</div>
 			</div>
 
-			{showLogin && <LoginDialog onClose={() => setShowLogin(false)} />}
+			{showLogin && (
+				<LoginDialog
+					onClose={() => setShowLogin(false)}
+					onPublishEvent={publish}
+				/>
+			)}
 		</main>
 	);
 }

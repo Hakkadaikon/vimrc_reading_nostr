@@ -1,5 +1,7 @@
-import { getPublicKey } from "nostr-tools/pure";
+import type { Event } from "nostr-tools/core";
+import { finalizeEvent, getPublicKey } from "nostr-tools/pure";
 import { useState } from "react";
+import { createMetadataEvent } from "#/lib/nostr/events";
 import {
 	generateKeyPair,
 	nsecToSecretKey,
@@ -10,21 +12,35 @@ import { useAuthStore } from "#/stores/auth-store";
 
 type LoginDialogProps = {
 	onClose: () => void;
+	onPublishEvent?: (event: Event) => Promise<void>;
 };
 
-export function LoginDialog({ onClose }: LoginDialogProps) {
+export function LoginDialog({ onClose, onPublishEvent }: LoginDialogProps) {
 	const loginWithKeys = useAuthStore((s) => s.loginWithKeys);
 	const loginWithNip07 = useAuthStore((s) => s.loginWithNip07);
 	const loginWithNsec = useAuthStore((s) => s.loginWithNsec);
 	const [nsecInput, setNsecInput] = useState("");
 	const [error, setError] = useState("");
 	const [generatedNsec, setGeneratedNsec] = useState("");
+	const [generatedSecretKey, setGeneratedSecretKey] =
+		useState<Uint8Array | null>(null);
+	const [nameInput, setNameInput] = useState("");
 
 	const handleGenerateKeys = () => {
 		const { secretKey, publicKey } = generateKeyPair();
 		const nsec = secretKeyToNsec(secretKey);
 		setGeneratedNsec(nsec);
+		setGeneratedSecretKey(secretKey);
 		loginWithKeys(secretKey, publicKey);
+	};
+
+	const handleConfirmGenerated = async () => {
+		if (nameInput.trim() && generatedSecretKey && onPublishEvent) {
+			const template = createMetadataEvent({ name: nameInput.trim() });
+			const signedEvent = finalizeEvent(template, generatedSecretKey);
+			await onPublishEvent(signedEvent);
+		}
+		onClose();
 	};
 
 	const handleNip07Login = async () => {
@@ -64,6 +80,22 @@ export function LoginDialog({ onClose }: LoginDialogProps) {
 					<h2 className="mb-4 text-lg font-bold text-[var(--sea-ink)]">
 						鍵ペアを生成しました
 					</h2>
+					<div className="mb-4">
+						<label
+							htmlFor="name-input"
+							className="mb-1 block text-sm font-semibold text-[var(--sea-ink)]"
+						>
+							表示名
+						</label>
+						<input
+							id="name-input"
+							type="text"
+							value={nameInput}
+							onChange={(e) => setNameInput(e.target.value)}
+							placeholder="名前を入力"
+							className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[rgba(79,184,178,0.6)] dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+						/>
+					</div>
 					<div className="mb-4 rounded-lg bg-yellow-50 p-4 text-sm dark:bg-yellow-900/30">
 						<p className="mb-2 font-semibold text-yellow-800 dark:text-yellow-200">
 							秘密鍵を安全に保管してください
@@ -77,7 +109,7 @@ export function LoginDialog({ onClose }: LoginDialogProps) {
 					</div>
 					<button
 						type="button"
-						onClick={onClose}
+						onClick={handleConfirmGenerated}
 						className="w-full rounded-lg bg-[rgba(79,184,178,0.9)] py-2 text-sm font-semibold text-white hover:bg-[rgba(79,184,178,1)]"
 					>
 						保管しました
