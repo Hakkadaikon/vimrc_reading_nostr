@@ -366,7 +366,7 @@ function ChatPage() {
 					<button
 						type="button"
 						onClick={() => setShowParticipants(!showParticipants)}
-						className="rounded p-1 text-[var(--sea-ink-soft)] hover:bg-gray-100 md:hidden dark:hover:bg-gray-800"
+						className="rounded p-2 text-[var(--sea-ink-soft)] hover:bg-gray-100 md:hidden dark:hover:bg-gray-800"
 						title="参加者"
 					>
 						<Users className="h-5 w-5" />
@@ -379,7 +379,7 @@ function ChatPage() {
 				<div className="flex items-center gap-2 md:gap-3">
 					<Link
 						to="/settings"
-						className="text-xs text-[var(--sea-ink-soft)] hover:underline md:text-sm"
+						className="rounded px-2 py-1.5 text-xs text-[var(--sea-ink-soft)] hover:bg-gray-100 md:px-2 md:py-1 md:text-sm md:hover:bg-transparent md:hover:underline dark:hover:bg-gray-800 md:dark:hover:bg-transparent"
 					>
 						設定
 					</Link>
@@ -391,7 +391,7 @@ function ChatPage() {
 							<button
 								type="button"
 								onClick={() => useAuthStore.getState().logout()}
-								className="text-xs text-[var(--sea-ink-soft)] hover:underline md:text-sm"
+								className="rounded px-2 py-1.5 text-xs text-[var(--sea-ink-soft)] hover:bg-gray-100 md:px-2 md:py-1 md:text-sm md:hover:bg-transparent md:hover:underline dark:hover:bg-gray-800 md:dark:hover:bg-transparent"
 							>
 								ログアウト
 							</button>
@@ -400,7 +400,7 @@ function ChatPage() {
 						<button
 							type="button"
 							onClick={() => setShowLogin(true)}
-							className="rounded-lg bg-[rgba(233,84,32,0.9)] px-3 py-1 text-xs font-semibold text-white hover:bg-[rgba(233,84,32,1)] md:px-4 md:py-1.5 md:text-sm"
+							className="rounded-lg bg-[rgba(233,84,32,0.9)] px-4 py-2 text-sm font-semibold text-white hover:bg-[rgba(233,84,32,1)] md:px-4 md:py-1.5 md:text-sm"
 						>
 							ログイン
 						</button>
@@ -466,11 +466,11 @@ function ChatPage() {
 						{isLoggedIn ? (
 							<MessageForm onSubmit={handleSendMessage} />
 						) : (
-							<div className="border-t border-gray-200 p-3 text-center text-xs text-[var(--sea-ink-soft)] md:p-4 md:text-sm dark:border-gray-700">
+							<div className="border-t border-gray-200 p-3 text-center text-sm text-[var(--sea-ink-soft)] md:p-4 dark:border-gray-700">
 								<button
 									type="button"
 									onClick={() => setShowLogin(true)}
-									className="text-[rgba(233,84,32,1)] hover:underline"
+									className="rounded px-2 py-1 font-medium text-[rgba(233,84,32,1)] hover:underline"
 								>
 									ログイン
 								</button>
