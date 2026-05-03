@@ -1,6 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useCallback, useState } from "react";
-import { clearProfileCache } from "#/lib/nostr/profile-cache";
+import { useCallback, useMemo, useState } from "react";
+import {
+	clearProfileCache,
+	getCacheEntryCount,
+} from "#/lib/nostr/profile-cache";
 import { useProfileStore } from "#/stores/profile-store";
 
 export const Route = createFileRoute("/settings")({ component: SettingsPage });
@@ -9,26 +12,14 @@ function SettingsPage() {
 	const [cleared, setCleared] = useState(false);
 	const profileCount = useProfileStore((s) => Object.keys(s.profiles).length);
 
+	const cacheEntryCount = useMemo(() => getCacheEntryCount(), [cleared]);
+
 	const handleClearCache = useCallback(() => {
-		// localStorageのキャッシュをクリア
 		clearProfileCache();
-		// メモリ上のプロフィールストアもクリア
 		useProfileStore.getState().clearProfiles();
 		setCleared(true);
 		setTimeout(() => setCleared(false), 3000);
 	}, []);
-
-	// localStorageのキャッシュサイズを概算
-	let cacheEntryCount = 0;
-	for (let i = 0; i < localStorage.length; i++) {
-		const key = localStorage.key(i);
-		if (
-			key &&
-			(key.startsWith("nostr_profile_") || key.startsWith("nostr_relaylist_"))
-		) {
-			cacheEntryCount++;
-		}
-	}
 
 	return (
 		<main className="page-wrap px-4 py-8">

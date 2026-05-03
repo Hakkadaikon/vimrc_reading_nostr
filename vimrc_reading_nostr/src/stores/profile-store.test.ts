@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useProfileStore } from "./profile-store";
 
 describe("useProfileStore", () => {
@@ -65,5 +65,15 @@ describe("useProfileStore", () => {
 		useProfileStore.getState().markRequested("pubkey1");
 		useProfileStore.getState().clearProfiles();
 		expect(useProfileStore.getState().needsFetch("pubkey1")).toBe(true);
+	});
+
+	it("リクエスト後30秒経過するとneedsFetchがtrueに戻る（TTL）", () => {
+		vi.useFakeTimers();
+		useProfileStore.getState().markRequested("pubkey1");
+		expect(useProfileStore.getState().needsFetch("pubkey1")).toBe(false);
+
+		vi.advanceTimersByTime(31_000);
+		expect(useProfileStore.getState().needsFetch("pubkey1")).toBe(true);
+		vi.useRealTimers();
 	});
 });

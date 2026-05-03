@@ -55,16 +55,30 @@ export function getCachedRelayList(pubkey: string): string[] | null {
 	}
 }
 
+function isCacheKey(key: string): boolean {
+	return key.startsWith(PROFILE_PREFIX) || key.startsWith(RELAY_LIST_PREFIX);
+}
+
+export function getCacheEntryCount(): number {
+	const storage = getStorage();
+	if (!storage) return 0;
+	let count = 0;
+	for (let i = 0; i < storage.length; i++) {
+		const key = storage.key(i);
+		if (key && isCacheKey(key)) {
+			count++;
+		}
+	}
+	return count;
+}
+
 export function clearProfileCache(): void {
 	const storage = getStorage();
 	if (!storage) return;
 	const keysToRemove: string[] = [];
 	for (let i = 0; i < storage.length; i++) {
 		const key = storage.key(i);
-		if (
-			key &&
-			(key.startsWith(PROFILE_PREFIX) || key.startsWith(RELAY_LIST_PREFIX))
-		) {
+		if (key && isCacheKey(key)) {
 			keysToRemove.push(key);
 		}
 	}

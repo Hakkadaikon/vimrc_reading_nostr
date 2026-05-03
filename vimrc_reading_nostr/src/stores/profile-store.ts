@@ -7,9 +7,11 @@ export type UserProfile = {
 	about?: string;
 };
 
+const REQUEST_TTL_MS = 30_000;
+
 type ProfileState = {
 	profiles: Record<string, UserProfile>;
-	requestedPubkeys: Set<string>;
+	requestedAt: Record<string, number>;
 	setProfile: (pubkey: string, profile: UserProfile) => void;
 	getProfile: (pubkey: string) => UserProfile | undefined;
 	getDisplayName: (pubkey: string) => string;
@@ -19,9 +21,13 @@ type ProfileState = {
 	clearProfiles: () => void;
 };
 
+function isRequestExpired(requestedAt: number): boolean {
+	return Date.now() - requestedAt > REQUEST_TTL_MS;
+}
+
 export const useProfileStore = create<ProfileState>((set, get) => ({
 	profiles: {},
-	requestedPubkeys: new Set<string>(),
+	requestedAt: {},
 
 	setProfile: (pubkey, profile) => {
 		set((state) => ({
@@ -43,25 +49,30 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
 
 	needsFetch: (pubkey) => {
 		const state = get();
-		return !state.profiles[pubkey] && !state.requestedPubkeys.has(pubkey);
+		if (state.profiles[pubkey]) return false;
+		const ts = state.requestedAt[pubkey];
+		if (!ts) return true;
+		return isRequestExpired(ts);
 	},
 
 	markRequested: (pubkey) => {
-		set((state) => {
-			const newSet = new Set(state.requestedPubkeys);
-			newSet.add(pubkey);
-			return { requestedPubkeys: newSet };
-		});
+		set((state) => ({
+			requestedAt: { ...state.requestedAt, [pubkey]: Date.now() },
+		}));
 	},
 
 	getUnfetchedPubkeys: (pubkeys) => {
 		const state = get();
-		return pubkeys.filter(
-			(pk) => !state.profiles[pk] && !state.requestedPubkeys.has(pk),
-		);
+		const now = Date.now();
+		return pubkeys.filter((pk) => {
+			if (state.profiles[pk]) return false;
+			const ts = state.requestedAt[pk];
+			if (!ts) return true;
+			return now - ts > REQUEST_TTL_MS;
+		});
 	},
 
 	clearProfiles: () => {
-		set({ profiles: {}, requestedPubkeys: new Set<string>() });
+		set({ profiles: {}, requestedAt: {} });
 	},
 }));
