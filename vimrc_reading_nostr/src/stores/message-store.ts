@@ -11,9 +11,10 @@ export type NostrMessage = {
 };
 
 export const MESSAGE_STORAGE_KEY = "vimrc_reading_nostr_messages";
-export const PAGE_SIZE = 100;
+export const PAGE_SIZE = 50;
 
 type MessageState = {
+	// UIに表示中のメッセージ（ページング管理）
 	messages: NostrMessage[];
 	messageIds: Set<string>;
 	deletedIds: Set<string>;
@@ -23,12 +24,16 @@ type MessageState = {
 	addMessages: (events: NostrMessage[]) => void;
 	deleteMessage: (eventId: string) => void;
 	clearMessages: () => void;
-	saveToLocalStorage: () => void;
-	loadFromLocalStorage: () => void;
-	loadOlderFromLocalStorage: (until: number) => NostrMessage[];
 	setInitialLoading: (loading: boolean) => void;
 	setHasMore: (hasMore: boolean) => void;
 	getOldestTimestamp: () => number | undefined;
+	// localStorage操作
+	saveToLocalStorage: () => void;
+	loadFromLocalStorage: () => void;
+	// ページング: localStorageから最新N件を読み出してUIに反映
+	loadLatestPage: () => void;
+	// ページング: localStorageからuntilより古いN件を読み出し
+	loadOlderPage: (until: number) => NostrMessage[];
 };
 
 function binaryInsert(
@@ -50,8 +55,58 @@ function binaryInsert(
 	return result;
 }
 
-// loadOlderFromLocalStorage用のパース結果キャッシュ
+// localStorage全件のパースキャッシュ
 let parsedStorageCache: NostrMessage[] | null = null;
+
+function getAllFromStorage(): NostrMessage[] {
+	if (parsedStorageCache) return parsedStorageCache;
+	if (typeof window === "undefined") return [];
+	try {
+		const stored = localStorage.getItem(MESSAGE_STORAGE_KEY);
+		if (!stored) return [];
+		const parsed: NostrMessage[] = JSON.parse(stored);
+		if (!Array.isArray(parsed)) return [];
+		parsedStorageCache = parsed;
+		return parsed;
+	} catch {
+		return [];
+	}
+}
+
+function saveAllToStorage(messages: NostrMessage[]) {
+	if (typeof window === "undefined") return;
+	const doSave = () => {
+		localStorage.setItem(MESSAGE_STORAGE_KEY, JSON.stringify(messages));
+		parsedStorageCache = null;
+	};
+	if ("requestIdleCallback" in window) {
+		requestIdleCallback(doSave);
+	} else {
+		setTimeout(doSave, 0);
+	}
+}
+
+// localStorageにイベントを追記（既存のものとマージ）
+export function appendToStorage(events: NostrMessage[]) {
+	if (typeof window === "undefined") return;
+	if (events.length === 0) return;
+	const all = getAllFromStorage();
+	const existingIds = new Set(all.map((m) => m.id));
+	const newEvents = events.filter((e) => !existingIds.has(e.id));
+	if (newEvents.length === 0) return;
+	const merged = [...all, ...newEvents].sort(
+		(a, b) => a.created_at - b.created_at,
+	);
+	parsedStorageCache = merged;
+	const doSave = () => {
+		localStorage.setItem(MESSAGE_STORAGE_KEY, JSON.stringify(merged));
+	};
+	if ("requestIdleCallback" in window) {
+		requestIdleCallback(doSave);
+	} else {
+		setTimeout(doSave, 0);
+	}
+}
 
 export const useMessageStore = create<MessageState>((set, get) => ({
 	messages: [],
@@ -115,51 +170,37 @@ export const useMessageStore = create<MessageState>((set, get) => ({
 	},
 
 	saveToLocalStorage: () => {
-		if (typeof window === "undefined") return;
 		const messages = get().messages;
-		const doSave = () => {
-			localStorage.setItem(MESSAGE_STORAGE_KEY, JSON.stringify(messages));
-			parsedStorageCache = null;
-		};
-		// メインスレッドがアイドル時に保存してUIブロックを回避
-		if ("requestIdleCallback" in window) {
-			requestIdleCallback(doSave);
-		} else {
-			setTimeout(doSave, 0);
-		}
+		saveAllToStorage(messages);
 	},
 
 	loadFromLocalStorage: () => {
-		if (typeof window === "undefined") return;
-		try {
-			const stored = localStorage.getItem(MESSAGE_STORAGE_KEY);
-			if (!stored) return;
-			const events: NostrMessage[] = JSON.parse(stored);
-			if (!Array.isArray(events)) return;
-			get().addMessages(events);
-		} catch {
-			// データが壊れている場合は何もしない
-		}
+		// 初回ロード: localStorageから最新PAGE_SIZE件をUI表示用に読み込む
+		get().loadLatestPage();
 	},
 
-	loadOlderFromLocalStorage: (until: number): NostrMessage[] => {
-		if (typeof window === "undefined") return [];
-		try {
-			if (!parsedStorageCache) {
-				const stored = localStorage.getItem(MESSAGE_STORAGE_KEY);
-				if (!stored) return [];
-				const parsed: NostrMessage[] = JSON.parse(stored);
-				if (!Array.isArray(parsed)) return [];
-				parsedStorageCache = parsed;
-			}
-			const { messageIds } = get();
-			return parsedStorageCache
-				.filter((e) => e.created_at < until && !messageIds.has(e.id))
-				.sort((a, b) => b.created_at - a.created_at)
-				.slice(0, PAGE_SIZE);
-		} catch {
-			return [];
-		}
+	loadLatestPage: () => {
+		const all = getAllFromStorage();
+		if (all.length === 0) return;
+		// 最新PAGE_SIZE件を取得（配列はcreated_at昇順）
+		const latest = all.slice(-PAGE_SIZE);
+		const hasMore = all.length > PAGE_SIZE;
+		const newIds = new Set(latest.map((m) => m.id));
+		set({
+			messages: latest,
+			messageIds: newIds,
+			hasMore,
+			isInitialLoading: false,
+		});
+	},
+
+	loadOlderPage: (until: number): NostrMessage[] => {
+		const all = getAllFromStorage();
+		const { messageIds } = get();
+		return all
+			.filter((e) => e.created_at < until && !messageIds.has(e.id))
+			.sort((a, b) => b.created_at - a.created_at)
+			.slice(0, PAGE_SIZE);
 	},
 
 	setInitialLoading: (loading) => {

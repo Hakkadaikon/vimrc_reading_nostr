@@ -148,7 +148,7 @@ describe("localStorage キャッシュ", () => {
 		expect(useMessageStore.getState().isInitialLoading).toBe(false);
 	});
 
-	it("loadOlderFromLocalStorageでuntil以前の未取得メッセージを返す", () => {
+	it("loadOlderPageでuntil以前の未取得メッセージを返す", () => {
 		const events = [
 			makeEvent("id1", "Old1", 1000),
 			makeEvent("id2", "Old2", 2000),
@@ -159,15 +159,15 @@ describe("localStorage キャッシュ", () => {
 		// id3は既にストアにあるとする
 		useMessageStore.getState().addMessage(makeEvent("id3", "Recent", 3000));
 
-		const older = useMessageStore.getState().loadOlderFromLocalStorage(3000);
+		const older = useMessageStore.getState().loadOlderPage(3000);
 		expect(older).toHaveLength(2);
 		// 新しい順に返される
 		expect(older[0].content).toBe("Old2");
 		expect(older[1].content).toBe("Old1");
 	});
 
-	it("loadOlderFromLocalStorageはlocalStorageが空なら空配列を返す", () => {
-		const older = useMessageStore.getState().loadOlderFromLocalStorage(3000);
+	it("loadOlderPageはlocalStorageが空なら空配列を返す", () => {
+		const older = useMessageStore.getState().loadOlderPage(3000);
 		expect(older).toEqual([]);
 	});
 });

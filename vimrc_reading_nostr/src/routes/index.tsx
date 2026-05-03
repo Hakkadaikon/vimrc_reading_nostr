@@ -32,7 +32,11 @@ import { createReactionEvent } from "#/lib/nostr/reactions";
 import { resolveProfile } from "#/lib/nostr/relay-discovery";
 import { useAuthStore } from "#/stores/auth-store";
 import type { NostrMessage } from "#/stores/message-store";
-import { PAGE_SIZE, useMessageStore } from "#/stores/message-store";
+import {
+	appendToStorage,
+	PAGE_SIZE,
+	useMessageStore,
+} from "#/stores/message-store";
 import { useProfileStore } from "#/stores/profile-store";
 import { useReactionStore } from "#/stores/reaction-store";
 
@@ -47,8 +51,6 @@ function ChatPage() {
 	const addMessage = useMessageStore((s) => s.addMessage);
 	const deleteMessage = useMessageStore((s) => s.deleteMessage);
 	const isInitialLoading = useMessageStore((s) => s.isInitialLoading);
-	const setInitialLoading = useMessageStore((s) => s.setInitialLoading);
-	const saveToLocalStorage = useMessageStore((s) => s.saveToLocalStorage);
 	const loadFromLocalStorage = useMessageStore((s) => s.loadFromLocalStorage);
 	const hasMore = useMessageStore((s) => s.hasMore);
 	const setHasMore = useMessageStore((s) => s.setHasMore);
@@ -66,10 +68,36 @@ function ChatPage() {
 	const sidebarRef = useRef<HTMLElement>(null);
 	const resizeCleanupRef = useRef<(() => void) | null>(null);
 
-	// 起動時にlocalStorageからキャッシュを復元
+	// 起動時にlocalStorageから最新PAGE_SIZE件を復元してUI表示
 	useEffect(() => {
 		loadFromLocalStorage();
 	}, [loadFromLocalStorage]);
+
+	// バックグラウンド同期用バッファ（デバウンスしてlocalStorageに書き込む）
+	const bgBufferRef = useRef<NostrMessage[]>([]);
+	const bgSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+	const flushBgBuffer = useCallback(() => {
+		if (bgBufferRef.current.length === 0) return;
+		const events = bgBufferRef.current;
+		bgBufferRef.current = [];
+		// localStorageに追記
+		appendToStorage(events);
+		// UIにもリアルタイム反映
+		useMessageStore.getState().addMessages(events);
+	}, []);
+
+	const enqueueBgEvent = useCallback(
+		(event: NostrMessage) => {
+			bgBufferRef.current.push(event);
+			if (bgSaveTimerRef.current) return;
+			bgSaveTimerRef.current = setTimeout(() => {
+				bgSaveTimerRef.current = null;
+				flushBgBuffer();
+			}, 500);
+		},
+		[flushBgBuffer],
+	);
 
 	// 当日〜翌AM2:00(JST)の発言者リスト（参照安定化）
 	const prevParticipantsRef = useRef<string[]>([]);
@@ -147,27 +175,25 @@ function ChatPage() {
 		}
 	}, []);
 
-	// メッセージ・リアクション・削除の購読
+	// バックグラウンド購読: kind:42を常時受信しlocalStorageに蓄積
+	// EOSE後はリアルタイムで新着を受け続ける（limitなし）
 	useEffect(() => {
-		const filter = createChannelMessageFilter({ limit: PAGE_SIZE });
-		let receivedCount = 0;
+		// 初回は直近メッセージを取得するためlimit付き
+		const filter = createChannelMessageFilter({ limit: PAGE_SIZE * 2 });
 		const unsub = subscribe(
 			[filter],
 			(event: Event) => {
-				receivedCount++;
-				addMessage(event as NostrMessage);
-				requestProfile(event.pubkey);
+				const msg = event as NostrMessage;
+				requestProfile(msg.pubkey);
+				enqueueBgEvent(msg);
 			},
 			() => {
-				// EOSE: リレーごとに発火するため初回のみ処理する
+				// EOSE: バッファを即フラッシュしてlocalStorageに保存
 				if (eoseReceivedRef.current) return;
 				eoseReceivedRef.current = true;
-				// 受信数 < PAGE_SIZE なら過去メッセージは存在しない
-				if (receivedCount < PAGE_SIZE) {
-					setHasMore(false);
-				}
-				saveToLocalStorage();
-				setInitialLoading(false);
+				flushBgBuffer();
+				// localStorageから最新PAGE_SIZE件をUIに反映
+				useMessageStore.getState().loadLatestPage();
 			},
 		);
 
@@ -196,34 +222,20 @@ function ChatPage() {
 				clearTimeout(batchTimerRef.current);
 				batchTimerRef.current = null;
 			}
+			if (bgSaveTimerRef.current) {
+				clearTimeout(bgSaveTimerRef.current);
+				bgSaveTimerRef.current = null;
+			}
+			flushBgBuffer();
 		};
 	}, [
 		subscribe,
-		addMessage,
 		addReaction,
 		deleteMessage,
 		requestProfile,
-		saveToLocalStorage,
-		setInitialLoading,
-		setHasMore,
+		enqueueBgEvent,
+		flushBgBuffer,
 	]);
-
-	// 新メッセージ到着時にlocalStorageへ自動保存（デバウンス2秒）
-	const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-	const prevMessageCountRef = useRef(0);
-	useEffect(() => {
-		if (isInitialLoading) return;
-		if (messages.length <= prevMessageCountRef.current) {
-			prevMessageCountRef.current = messages.length;
-			return;
-		}
-		prevMessageCountRef.current = messages.length;
-		if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-		saveTimerRef.current = setTimeout(() => {
-			saveToLocalStorage();
-			saveTimerRef.current = null;
-		}, 2000);
-	}, [messages.length, isInitialLoading, saveToLocalStorage]);
 
 	const fetchOlderFromRelay = useCallback(
 		(until: number) => {
@@ -239,6 +251,8 @@ function ChatPage() {
 					if (!useMessageStore.getState().messageIds.has(msg.id)) {
 						received++;
 					}
+					// localStorageに保存しつつUIにも追加
+					appendToStorage([msg]);
 					addMessage(msg);
 					requestProfile(event.pubkey);
 				},
@@ -246,16 +260,15 @@ function ChatPage() {
 					if (received === 0) {
 						setHasMore(false);
 					}
-					saveToLocalStorage();
 					setIsLoadingMore(false);
 					unsub();
 				},
 			);
 		},
-		[subscribe, addMessage, requestProfile, saveToLocalStorage, setHasMore],
+		[subscribe, addMessage, requestProfile, setHasMore],
 	);
 
-	// 過去メッセージの追加読み込み
+	// 過去メッセージの追加読み込み（localStorage優先→不足分はリレーへ）
 	const loadMore = useCallback(() => {
 		if (isLoadingMore || !hasMore) return;
 		setIsLoadingMore(true);
@@ -268,10 +281,11 @@ function ChatPage() {
 		}
 
 		// 1. localStorageから取得を試みる
-		const cached = useMessageStore.getState().loadOlderFromLocalStorage(oldest);
+		const cached = useMessageStore.getState().loadOlderPage(oldest);
 		if (cached.length > 0) {
 			useMessageStore.getState().addMessages(cached);
 			if (cached.length < PAGE_SIZE) {
+				// localStorageに足りない分はリレーから取得
 				fetchOlderFromRelay(oldest);
 			} else {
 				setIsLoadingMore(false);
