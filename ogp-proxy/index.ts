@@ -29,7 +29,10 @@ export default {
 
 		try {
 			const res = await fetch(url, {
-				headers: { "User-Agent": "bot" },
+				headers: {
+					"User-Agent":
+						"Mozilla/5.0 (compatible; OGPBot/1.0; +https://vimrc-reading.hakkadaikon.com)",
+				},
 				redirect: "follow",
 			});
 
@@ -58,7 +61,7 @@ export default {
 
 			let html = "";
 			const decoder = new TextDecoder();
-			while (html.length < 16384) {
+			while (html.length < 65536) {
 				const { done, value } = await reader.read();
 				if (done) break;
 				html += decoder.decode(value, { stream: true });
