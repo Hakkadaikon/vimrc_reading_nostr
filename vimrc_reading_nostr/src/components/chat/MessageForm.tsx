@@ -72,7 +72,7 @@ export function MessageForm({ onSubmit, disabled }: MessageFormProps) {
 				<button
 					type="submit"
 					disabled={!canSend}
-					className={`absolute bottom-2 right-2 rounded p-1 transition ${
+					className={`absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 transition ${
 						canSend
 							? "text-[var(--accent)] hover:bg-[var(--accent-soft)]"
 							: "text-[var(--fg-mute)] opacity-50"
