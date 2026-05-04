@@ -11,17 +11,19 @@ export const ConnectionStatus = memo(function ConnectionStatus() {
 	const isAnyConnected = connectedCount > 0;
 
 	return (
-		<div className="flex items-center gap-2 text-sm">
+		<div className="flex items-center gap-1.5 text-xs">
 			<span
 				className={`inline-block h-2 w-2 rounded-full ${
-					isAnyConnected ? "bg-green-500" : "bg-red-500"
+					isAnyConnected
+						? "bg-[var(--accent)] shadow-[0_0_6px_var(--accent)]"
+						: "bg-[var(--err)]"
 				}`}
 			/>
-			<span className="text-[var(--sea-ink-soft)]">
+			<span className="text-[var(--fg-mute)]">
 				{totalCount === 0
 					? "未接続"
 					: isAnyConnected
-						? `接続中 (${connectedCount}/${totalCount})`
+						? `${connectedCount}/${totalCount}`
 						: "切断"}
 			</span>
 		</div>

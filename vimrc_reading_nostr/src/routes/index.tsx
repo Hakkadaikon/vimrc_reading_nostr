@@ -381,7 +381,7 @@ function ChatPage() {
 	);
 
 	return (
-		<main className="flex h-dvh flex-col md:h-[calc(100vh-8rem)]">
+		<main className="flex h-dvh flex-col bg-[var(--bg)]">
 			<ChatHeader
 				isLoggedIn={isLoggedIn}
 				onToggleParticipants={toggleParticipants}
@@ -389,8 +389,8 @@ function ChatPage() {
 			/>
 
 			{isInitialLoading ? (
-				<div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 text-[var(--sea-ink-soft)]">
-					<div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-[rgba(233,84,32,0.9)]" />
+				<div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 text-[var(--fg-dim)]">
+					<div className="h-8 w-8 animate-spin rounded-full border-4 border-[var(--line)] border-t-[var(--accent)]" />
 					<p>メッセージを読み込んでいます...</p>
 				</div>
 			) : (
@@ -401,18 +401,18 @@ function ChatPage() {
 							{/* biome-ignore lint/a11y/noStaticElementInteractions: 背景オーバーレイのクリックでドロワーを閉じる */}
 							{/* biome-ignore lint/a11y/useKeyWithClickEvents: 背景オーバーレイはキーボード操作不要 */}
 							<div
-								className="fixed inset-0 z-40 bg-black/30 md:hidden"
+								className="fixed inset-0 z-40 bg-black/50 md:hidden"
 								onClick={() => setShowParticipants(false)}
 							/>
-							<aside className="fixed inset-y-0 left-0 z-50 w-64 border-r border-gray-200 bg-white pt-14 md:hidden dark:border-gray-700 dark:bg-gray-900">
-								<div className="flex items-center justify-between border-b border-gray-200 px-3 py-2 dark:border-gray-700">
-									<span className="text-sm font-semibold text-[var(--sea-ink)]">
+							<aside className="fixed inset-y-0 left-0 z-50 w-64 border-r border-[var(--line)] bg-[var(--bg-pane)] pt-14 md:hidden">
+								<div className="flex items-center justify-between border-b border-[var(--line)] px-3 py-2">
+									<span className="text-sm font-semibold text-[var(--fg)]">
 										参加者
 									</span>
 									<button
 										type="button"
 										onClick={() => setShowParticipants(false)}
-										className="rounded p-1 text-[var(--sea-ink-soft)] hover:bg-gray-100 dark:hover:bg-gray-800"
+										className="rounded p-1 text-[var(--fg-dim)] hover:bg-[var(--bg-elev-2)]"
 									>
 										<X className="h-4 w-4" />
 									</button>
@@ -425,16 +425,16 @@ function ChatPage() {
 					{/* デスクトップ: リサイズ可能なサイドバー */}
 					<aside
 						ref={sidebarRef}
-						className="hidden w-48 flex-shrink-0 border-r border-gray-200 md:block dark:border-gray-700"
+						className="hidden w-48 flex-shrink-0 border-r border-[var(--line)] bg-[var(--bg-pane)] md:block"
 					>
 						<ParticipantList participantPubkeys={participantPubkeys} />
 					</aside>
 					<div
-						className="hidden w-1 flex-shrink-0 cursor-col-resize hover:bg-[rgba(233,84,32,0.3)] active:bg-[rgba(233,84,32,0.5)] md:block"
+						className="hidden w-1 flex-shrink-0 cursor-col-resize hover:bg-[var(--accent-soft)] active:bg-[var(--accent)] md:block"
 						onPointerDown={handleResizeStart}
 					/>
 
-					<div className="flex min-w-0 flex-1 flex-col">
+					<div className="flex min-w-0 flex-1 flex-col bg-[var(--bg-elev)]">
 						<MessageList
 							highlightedEventId={highlightedEventId}
 							hasMore={hasMore}
@@ -446,11 +446,11 @@ function ChatPage() {
 						{isLoggedIn ? (
 							<MessageForm onSubmit={handleSendMessage} />
 						) : (
-							<div className="shrink-0 border-t border-gray-200 bg-white p-3 text-center text-sm text-[var(--sea-ink-soft)] md:p-4 dark:border-gray-700 dark:bg-gray-900">
+							<div className="shrink-0 border-t border-[var(--line)] bg-[var(--bg-pane)] p-3 text-center text-sm text-[var(--fg-dim)] md:p-4">
 								<button
 									type="button"
 									onClick={() => setShowLogin(true)}
-									className="rounded px-2 py-1 font-medium text-[rgba(233,84,32,1)] hover:underline"
+									className="rounded px-2 py-1 font-medium text-[var(--accent)] hover:underline"
 								>
 									ログイン
 								</button>
@@ -483,17 +483,17 @@ const ChatHeader = memo(function ChatHeader({
 	onShowLogin,
 }: ChatHeaderProps) {
 	return (
-		<div className="relative z-50 flex items-center justify-between border-b border-gray-200 bg-white px-3 py-2 md:px-4 dark:border-gray-700 dark:bg-gray-900">
+		<div className="relative z-50 flex h-6 items-center justify-between border-b border-[var(--line)] bg-[var(--bg-pane)] px-3 py-4 md:px-4">
 			<div className="flex items-center gap-2 md:gap-3">
 				<button
 					type="button"
 					onClick={onToggleParticipants}
-					className="rounded p-2 text-[var(--sea-ink-soft)] hover:bg-gray-100 md:hidden dark:hover:bg-gray-800"
+					className="rounded p-1.5 text-[var(--fg-dim)] hover:bg-[var(--bg-elev-2)] md:hidden"
 					title="参加者"
 				>
-					<Users className="h-5 w-5" />
+					<Users className="h-4 w-4" />
 				</button>
-				<h1 className="text-base font-bold text-[var(--sea-ink)] md:text-lg">
+				<h1 className="text-sm font-bold text-[var(--fg)]">
 					vimrc読書会
 				</h1>
 				<ConnectionStatus />
@@ -506,28 +506,28 @@ const ChatHeader = memo(function ChatHeader({
 				)}
 				<Link
 					to="/settings"
-					className="rounded p-2 text-[var(--sea-ink-soft)] hover:bg-gray-100 dark:hover:bg-gray-800"
+					className="rounded p-1.5 text-[var(--fg-dim)] hover:bg-[var(--bg-elev-2)]"
 					title="設定"
 				>
-					<Settings className="h-5 w-5" />
+					<Settings className="h-4 w-4" />
 				</Link>
 				{isLoggedIn ? (
 					<button
 						type="button"
 						onClick={() => useAuthStore.getState().logout()}
-						className="rounded p-2 text-[var(--sea-ink-soft)] hover:bg-gray-100 dark:hover:bg-gray-800"
+						className="rounded p-1.5 text-[var(--fg-dim)] hover:bg-[var(--bg-elev-2)]"
 						title="ログアウト"
 					>
-						<LogOut className="h-5 w-5" />
+						<LogOut className="h-4 w-4" />
 					</button>
 				) : (
 					<button
 						type="button"
 						onClick={onShowLogin}
-						className="rounded p-2 text-[var(--sea-ink-soft)] hover:bg-gray-100 dark:hover:bg-gray-800"
+						className="rounded p-1.5 text-[var(--fg-dim)] hover:bg-[var(--bg-elev-2)]"
 						title="ログイン"
 					>
-						<LogIn className="h-5 w-5" />
+						<LogIn className="h-4 w-4" />
 					</button>
 				)}
 			</div>

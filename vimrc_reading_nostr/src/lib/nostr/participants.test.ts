@@ -6,10 +6,7 @@ import {
 } from "#/lib/nostr/participants";
 import type { NostrMessage } from "#/stores/message-store";
 
-function makeMessage(
-	pubkey: string,
-	created_at: number,
-): NostrMessage {
+function makeMessage(pubkey: string, created_at: number): NostrMessage {
 	return {
 		id: `id-${pubkey}-${created_at}`,
 		pubkey,

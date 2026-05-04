@@ -63,7 +63,7 @@ export function MessageItem({
 		return (
 			<div
 				id={`msg-${message.id}`}
-				className="px-4 py-2 text-sm text-gray-400 italic"
+				className="px-4 py-2 text-sm text-[var(--fg-mute)] italic"
 			>
 				このメッセージは削除されました
 			</div>
@@ -73,40 +73,44 @@ export function MessageItem({
 	return (
 		<div
 			id={`msg-${message.id}`}
-			className={`group flex gap-2 px-3 py-2 transition-colors md:gap-3 md:px-4 md:py-3 ${
+			className={`group flex gap-2 px-3 py-2 transition-colors md:gap-3 md:px-4 md:py-2.5 ${
 				highlighted
-					? "bg-yellow-50 dark:bg-yellow-900/20"
-					: "hover:bg-gray-50 dark:hover:bg-gray-800/50"
+					? "bg-[rgba(250,189,47,0.08)]"
+					: "hover:bg-[var(--bg-elev-2)]"
 			}`}
 		>
+			{/* Line number gutter */}
+			<div className="flex-shrink-0 w-10 pt-0.5 text-right text-xs text-[var(--gutter)] select-none">
+				{timeString.split(" ")[1] || timeString}
+			</div>
 			<div className="flex-shrink-0">
 				{profile?.picture ? (
 					<img
 						src={profile.picture}
 						alt={displayName}
-						className="h-8 w-8 rounded-full object-cover"
+						className="h-7 w-7 rounded-sm object-cover"
 					/>
 				) : (
-					<div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-300 text-xs font-bold text-gray-600 dark:bg-gray-600 dark:text-gray-300">
+					<div className="flex h-7 w-7 items-center justify-center rounded-sm bg-[var(--bg-elev-2)] text-[10px] font-bold text-[var(--fg-dim)]">
 						{displayName.slice(0, 2)}
 					</div>
 				)}
 			</div>
 			<div className="min-w-0 flex-1">
 				<div className="flex items-baseline gap-2">
-					<span className="text-sm font-semibold text-[var(--sea-ink)]">
+					<span className="text-sm font-semibold text-[var(--accent)]">
 						{displayName}
 					</span>
 					<a
 						href={`?nevent=${nevent}`}
-						className="text-xs text-[var(--sea-ink-soft)] hover:underline"
+						className="text-xs text-[var(--fg-mute)] hover:text-[var(--fg-dim)] hover:underline"
 						title="Permalink"
 					>
 						{timeString}
 					</a>
 				</div>
 				<div
-					className="prose prose-sm mt-1 max-w-none dark:prose-invert [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:bg-gray-100 [&_pre]:p-3 dark:[&_pre]:bg-gray-800 [&_code]:rounded [&_code]:bg-gray-100 [&_code]:px-1 dark:[&_code]:bg-gray-800"
+					className="prose prose-sm prose-invert mt-1 max-w-none [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:bg-[var(--bg-pane)] [&_pre]:p-3 [&_code]:rounded [&_code]:bg-[var(--bg-pane)] [&_code]:px-1"
 					// biome-ignore lint/security/noDangerouslySetInnerHtml: Markdown rendered and sanitized by renderMarkdown
 					dangerouslySetInnerHTML={{ __html: html }}
 				/>
@@ -121,11 +125,11 @@ export function MessageItem({
 					<button
 						type="button"
 						onClick={handleCopy}
-						className="rounded px-1.5 py-0.5 text-gray-500 opacity-0 transition hover:bg-gray-100 group-hover:opacity-100 dark:hover:bg-gray-700"
+						className="rounded px-1.5 py-0.5 text-[var(--fg-mute)] opacity-0 transition hover:bg-[var(--bg-elev-2)] group-hover:opacity-100"
 						title="コピー"
 					>
 						{copied ? (
-							<Check className="h-3.5 w-3.5 text-green-500" />
+							<Check className="h-3.5 w-3.5 text-[var(--accent)]" />
 						) : (
 							<Copy className="h-3.5 w-3.5" />
 						)}
@@ -134,7 +138,7 @@ export function MessageItem({
 						<button
 							type="button"
 							onClick={() => onReact(message.id, message.pubkey)}
-							className="flex items-center gap-1 rounded px-2 py-0.5 text-xs text-gray-500 opacity-0 transition hover:bg-gray-100 group-hover:opacity-100 dark:hover:bg-gray-700"
+							className="flex items-center gap-1 rounded px-2 py-0.5 text-xs text-[var(--fg-mute)] opacity-0 transition hover:bg-[var(--bg-elev-2)] group-hover:opacity-100"
 							title="リアクション"
 						>
 							<span>+</span>
@@ -142,13 +146,15 @@ export function MessageItem({
 						</button>
 					)}
 					{reactionCount > 0 && !onReact && (
-						<span className="text-xs text-gray-500">+{reactionCount}</span>
+						<span className="text-xs text-[var(--fg-mute)]">
+							+{reactionCount}
+						</span>
 					)}
 					{isOwn && onDelete && (
 						<button
 							type="button"
 							onClick={() => onDelete(message.id)}
-							className="rounded px-2 py-0.5 text-xs text-red-400 opacity-0 transition hover:bg-red-50 group-hover:opacity-100 dark:hover:bg-red-900/20"
+							className="rounded px-2 py-0.5 text-xs text-[var(--err)] opacity-0 transition hover:bg-[rgba(251,73,52,0.1)] group-hover:opacity-100"
 							title="削除"
 						>
 							削除

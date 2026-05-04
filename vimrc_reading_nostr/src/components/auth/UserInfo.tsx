@@ -19,14 +19,14 @@ export const UserInfo = memo(function UserInfo() {
 				<img
 					src={profile.picture}
 					alt={displayName}
-					className="h-6 w-6 rounded-full object-cover"
+					className="h-5 w-5 rounded-sm object-cover"
 				/>
 			) : (
-				<div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-300 text-xs font-bold text-gray-600 dark:bg-gray-600 dark:text-gray-300">
+				<div className="flex h-5 w-5 items-center justify-center rounded-sm bg-[var(--bg-elev-2)] text-[9px] font-bold text-[var(--fg-dim)]">
 					{displayName.slice(0, 1)}
 				</div>
 			)}
-			<span className="max-w-[120px] truncate text-sm font-medium text-[var(--sea-ink)]">
+			<span className="max-w-[120px] truncate text-xs font-medium text-[var(--fg)]">
 				{displayName}
 			</span>
 		</div>

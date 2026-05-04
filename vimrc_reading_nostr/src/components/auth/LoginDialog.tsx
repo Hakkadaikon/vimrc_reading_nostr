@@ -89,15 +89,15 @@ export function LoginDialog({ onClose, onPublishEvent }: LoginDialogProps) {
 
 	if (generatedNsec) {
 		return (
-			<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-				<div className="mx-4 w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-gray-800">
-					<h2 className="mb-4 text-lg font-bold text-[var(--sea-ink)]">
+			<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+				<div className="mx-4 w-full max-w-md rounded-lg border border-[var(--line)] bg-[var(--bg-elev)] p-6 shadow-xl">
+					<h2 className="mb-4 text-lg font-bold text-[var(--fg)]">
 						鍵ペアを生成しました
 					</h2>
 					<div className="mb-4">
 						<label
 							htmlFor="name-input"
-							className="mb-1 block text-sm font-semibold text-[var(--sea-ink)]"
+							className="mb-1 block text-sm font-semibold text-[var(--fg)]"
 						>
 							表示名
 						</label>
@@ -107,14 +107,14 @@ export function LoginDialog({ onClose, onPublishEvent }: LoginDialogProps) {
 							value={nameInput}
 							onChange={(e) => setNameInput(e.target.value)}
 							placeholder="名前を入力"
-							className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[rgba(233,84,32,0.6)] dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+							className="w-full rounded border border-[var(--line)] bg-[var(--bg-pane)] px-3 py-2 text-sm text-[var(--fg)] outline-none placeholder:text-[var(--fg-mute)] focus:border-[var(--accent)]"
 						/>
 					</div>
-					<div className="mb-4 rounded-lg bg-yellow-50 p-4 text-sm dark:bg-yellow-900/30">
-						<p className="mb-2 font-semibold text-yellow-800 dark:text-yellow-200">
+					<div className="mb-4 rounded-lg border border-[rgba(250,189,47,0.3)] bg-[rgba(250,189,47,0.06)] p-4 text-sm">
+						<p className="mb-2 font-semibold text-[var(--warn)]">
 							秘密鍵を安全に保管してください
 						</p>
-						<p className="mb-2 text-yellow-700 dark:text-yellow-300">
+						<p className="mb-2 text-[var(--fg-dim)]">
 							この秘密鍵を失うとアカウントを復元できません。
 						</p>
 						<div className="flex gap-1">
@@ -122,12 +122,12 @@ export function LoginDialog({ onClose, onPublishEvent }: LoginDialogProps) {
 								type={showNsec ? "text" : "password"}
 								value={generatedNsec}
 								readOnly
-								className="flex-1 rounded bg-yellow-100 p-2 font-mono text-xs dark:bg-yellow-900/50"
+								className="flex-1 rounded bg-[var(--bg-pane)] p-2 font-mono text-xs text-[var(--fg)]"
 							/>
 							<button
 								type="button"
 								onClick={() => setShowNsec(!showNsec)}
-								className="shrink-0 rounded bg-yellow-200 px-2 text-xs text-yellow-800 hover:bg-yellow-300 dark:bg-yellow-800 dark:text-yellow-200 dark:hover:bg-yellow-700"
+								className="shrink-0 rounded bg-[var(--bg-elev-2)] px-2 text-xs text-[var(--fg-dim)] hover:bg-[var(--line)]"
 							>
 								{showNsec ? "隠す" : "表示"}
 							</button>
@@ -142,7 +142,7 @@ export function LoginDialog({ onClose, onPublishEvent }: LoginDialogProps) {
 										2000,
 									);
 								}}
-								className="shrink-0 rounded bg-yellow-200 px-2 text-xs text-yellow-800 hover:bg-yellow-300 dark:bg-yellow-800 dark:text-yellow-200 dark:hover:bg-yellow-700"
+								className="shrink-0 rounded bg-[var(--bg-elev-2)] px-2 text-xs text-[var(--fg-dim)] hover:bg-[var(--line)]"
 							>
 								{copied ? "コピー済" : "コピー"}
 							</button>
@@ -151,7 +151,7 @@ export function LoginDialog({ onClose, onPublishEvent }: LoginDialogProps) {
 					<button
 						type="button"
 						onClick={handleConfirmGenerated}
-						className="w-full rounded-lg bg-[rgba(233,84,32,0.9)] py-2 text-sm font-semibold text-white hover:bg-[rgba(233,84,32,1)]"
+						className="w-full rounded bg-[var(--accent)] py-2 text-sm font-semibold text-[var(--bg)] hover:bg-[var(--accent-strong)]"
 					>
 						保管しました
 					</button>
@@ -161,21 +161,21 @@ export function LoginDialog({ onClose, onPublishEvent }: LoginDialogProps) {
 	}
 
 	return (
-		<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-			<div className="mx-4 w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-gray-800">
+		<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+			<div className="mx-4 w-full max-w-md rounded-lg border border-[var(--line)] bg-[var(--bg-elev)] p-6 shadow-xl">
 				<div className="mb-4 flex items-center justify-between">
-					<h2 className="text-lg font-bold text-[var(--sea-ink)]">ログイン</h2>
+					<h2 className="text-lg font-bold text-[var(--fg)]">ログイン</h2>
 					<button
 						type="button"
 						onClick={onClose}
-						className="text-[var(--sea-ink-soft)] hover:text-[var(--sea-ink)]"
+						className="text-[var(--fg-dim)] hover:text-[var(--fg)]"
 					>
 						✕
 					</button>
 				</div>
 
 				{error && (
-					<div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/30 dark:text-red-400">
+					<div className="mb-4 rounded-lg border border-[rgba(251,73,52,0.3)] bg-[rgba(251,73,52,0.08)] p-3 text-sm text-[var(--err)]">
 						{error}
 					</div>
 				)}
@@ -184,11 +184,13 @@ export function LoginDialog({ onClose, onPublishEvent }: LoginDialogProps) {
 					<button
 						type="button"
 						onClick={handleNip07Login}
-						className="w-full rounded-lg border border-gray-300 px-4 py-3 text-left text-sm transition hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
+						className="w-full rounded border border-[var(--line)] px-4 py-3 text-left text-sm transition hover:bg-[var(--bg-elev-2)]"
 					>
-						<span className="font-semibold">NIP-07 拡張機能でログイン</span>
+						<span className="font-semibold text-[var(--fg)]">
+							NIP-07 拡張機能でログイン
+						</span>
 						<br />
-						<span className="text-xs text-[var(--sea-ink-soft)]">
+						<span className="text-xs text-[var(--fg-mute)]">
 							nos2x等のブラウザ拡張を使用（推奨）
 						</span>
 					</button>
@@ -196,19 +198,21 @@ export function LoginDialog({ onClose, onPublishEvent }: LoginDialogProps) {
 					<button
 						type="button"
 						onClick={handleGenerateKeys}
-						className="w-full rounded-lg border border-gray-300 px-4 py-3 text-left text-sm transition hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
+						className="w-full rounded border border-[var(--line)] px-4 py-3 text-left text-sm transition hover:bg-[var(--bg-elev-2)]"
 					>
-						<span className="font-semibold">新しい鍵ペアを生成</span>
+						<span className="font-semibold text-[var(--fg)]">
+							新しい鍵ペアを生成
+						</span>
 						<br />
-						<span className="text-xs text-[var(--sea-ink-soft)]">
+						<span className="text-xs text-[var(--fg-mute)]">
 							新規アカウントを作成
 						</span>
 					</button>
 
-					<div className="border-t pt-3 dark:border-gray-700">
+					<div className="border-t border-[var(--line)] pt-3">
 						<label
 							htmlFor="nsec-input"
-							className="mb-1 block text-sm font-semibold text-[var(--sea-ink)]"
+							className="mb-1 block text-sm font-semibold text-[var(--fg)]"
 						>
 							秘密鍵（nsec）で直接ログイン
 						</label>
@@ -219,13 +223,13 @@ export function LoginDialog({ onClose, onPublishEvent }: LoginDialogProps) {
 								value={nsecInput}
 								onChange={(e) => setNsecInput(e.target.value)}
 								placeholder="nsec1..."
-								className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[rgba(233,84,32,0.6)] dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+								className="flex-1 rounded border border-[var(--line)] bg-[var(--bg-pane)] px-3 py-2 text-sm text-[var(--fg)] outline-none placeholder:text-[var(--fg-mute)] focus:border-[var(--accent)]"
 							/>
 							<button
 								type="button"
 								onClick={handleNsecLogin}
 								disabled={!nsecInput.trim()}
-								className="rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700 disabled:opacity-50"
+								className="rounded bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-[var(--bg)] hover:bg-[var(--accent-strong)] disabled:opacity-50"
 							>
 								ログイン
 							</button>

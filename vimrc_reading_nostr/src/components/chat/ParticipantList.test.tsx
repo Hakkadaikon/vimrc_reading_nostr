@@ -30,7 +30,9 @@ describe("ParticipantList", () => {
 	it("プロフィールが未取得の場合でも短縮pubkeyが表示される", () => {
 		render(
 			<ParticipantList
-				participantPubkeys={["abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"]}
+				participantPubkeys={[
+					"abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+				]}
 			/>,
 		);
 

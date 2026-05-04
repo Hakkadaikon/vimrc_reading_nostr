@@ -2,10 +2,7 @@
  * @vitest-environment jsdom
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-	SETTINGS_STORAGE_KEY,
-	useSettingsStore,
-} from "./settings-store";
+import { SETTINGS_STORAGE_KEY, useSettingsStore } from "./settings-store";
 
 const mockStorage = new Map<string, string>();
 const storageMock = {

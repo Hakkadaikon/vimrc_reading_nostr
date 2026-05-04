@@ -88,7 +88,7 @@ export function MessageList({
 
 	if (visibleMessages.length === 0) {
 		return (
-			<div className="flex flex-1 items-center justify-center text-[var(--sea-ink-soft)]">
+			<div className="flex flex-1 items-center justify-center text-[var(--fg-dim)]">
 				<p>メッセージはまだありません</p>
 			</div>
 		);
@@ -105,12 +105,12 @@ export function MessageList({
 				next={onLoadMore}
 				hasMore={hasMore}
 				loader={
-					<div className="flex justify-center py-2 text-sm text-[var(--sea-ink-soft)]">
-						<div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-[rgba(233,84,32,0.9)]" />
+					<div className="flex justify-center py-2 text-sm text-[var(--fg-dim)]">
+						<div className="h-5 w-5 animate-spin rounded-full border-2 border-[var(--line)] border-t-[var(--accent)]" />
 					</div>
 				}
 				endMessage={
-					<p className="py-2 text-center text-xs text-[var(--sea-ink-soft)]">
+					<p className="py-2 text-center text-xs text-[var(--fg-mute)]">
 						これ以上メッセージはありません
 					</p>
 				}
