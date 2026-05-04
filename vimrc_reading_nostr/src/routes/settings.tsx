@@ -141,9 +141,9 @@ function SettingsHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
 					</span>
 				)}
 				<Link
-					to="/settings"
+					to="/"
 					className="rounded p-2 text-[var(--accent)]"
-					title="設定"
+					title="設定を閉じる"
 				>
 					<Settings className="h-5 w-5 md:h-6 md:w-6" />
 				</Link>
