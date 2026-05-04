@@ -1,4 +1,4 @@
-import { Check, Copy } from "lucide-react";
+import { Check, Copy, Trash2 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { extractGitHubFileLinks } from "#/lib/github";
 import { renderMarkdown } from "#/lib/markdown";
@@ -144,17 +144,55 @@ export function MessageItem({
 						</span>
 					)}
 					{isOwn && onDelete && (
-						<button
-							type="button"
-							onClick={() => onDelete(message.id)}
-							className="rounded px-2 py-0.5 text-xs text-[var(--err)] opacity-0 transition hover:bg-[rgba(251,73,52,0.1)] group-hover:opacity-100"
-							title="削除"
-						>
-							削除
-						</button>
+						<DeleteButton onConfirm={() => onDelete(message.id)} />
 					)}
 				</div>
 			</div>
 		</div>
+	);
+}
+
+function DeleteButton({ onConfirm }: { onConfirm: () => void }) {
+	const [showDialog, setShowDialog] = useState(false);
+
+	return (
+		<>
+			<button
+				type="button"
+				onClick={() => setShowDialog(true)}
+				className="rounded p-0.5 text-[var(--fg-mute)] opacity-0 transition hover:bg-[rgba(251,73,52,0.1)] hover:text-[var(--err)] group-hover:opacity-100"
+				title="削除"
+			>
+				<Trash2 className="h-3.5 w-3.5" />
+			</button>
+			{showDialog && (
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+					<div className="mx-4 w-full max-w-sm rounded-lg border border-[var(--line)] bg-[var(--bg-elev)] p-5 shadow-xl">
+						<p className="mb-4 text-sm text-[var(--fg)]">
+							このメッセージを削除しますか？
+						</p>
+						<div className="flex justify-end gap-2">
+							<button
+								type="button"
+								onClick={() => setShowDialog(false)}
+								className="rounded border border-[var(--line)] bg-[var(--bg-elev-2)] px-4 py-1.5 text-sm text-[var(--fg)] hover:border-[var(--fg-mute)]"
+							>
+								キャンセル
+							</button>
+							<button
+								type="button"
+								onClick={() => {
+									setShowDialog(false);
+									onConfirm();
+								}}
+								className="rounded bg-[var(--err)] px-4 py-1.5 text-sm font-semibold text-[var(--bg)] hover:opacity-90"
+							>
+								削除
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
+		</>
 	);
 }
