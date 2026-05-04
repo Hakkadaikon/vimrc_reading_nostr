@@ -42,7 +42,8 @@ export function OgpLinkPreview({ url }: OgpLinkPreviewProps) {
 
 		fetchOgpData(url).then((data) => {
 			if (cancelled) return;
-			cache.set(url, data);
+			// 成功時のみキャッシュ（失敗時は次回再試行）
+			if (data) cache.set(url, data);
 			setOgp(data);
 			setLoading(false);
 		});
