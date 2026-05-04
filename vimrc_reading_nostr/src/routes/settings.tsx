@@ -80,7 +80,7 @@ function SettingsPage() {
 						<button
 							type="button"
 							onClick={handleClearCache}
-							className="rounded bg-[var(--err)] px-4 py-2 text-sm font-semibold text-[var(--bg)] transition hover:opacity-90"
+							className="rounded border border-[var(--line)] bg-[var(--bg-elev-2)] px-4 py-2 text-sm font-semibold text-[var(--fg)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
 						>
 							キャッシュをクリア
 						</button>
