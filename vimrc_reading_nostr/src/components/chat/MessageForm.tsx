@@ -33,7 +33,7 @@ export function MessageForm({ onSubmit, disabled }: MessageFormProps) {
 	return (
 		<form
 			onSubmit={handleSubmit}
-			className="flex gap-2 border-t border-gray-200 p-2 md:p-4 dark:border-gray-700"
+			className="sticky bottom-0 flex gap-2 border-t border-gray-200 bg-white p-2 md:p-4 dark:border-gray-700 dark:bg-gray-900"
 		>
 			<textarea
 				value={content}
