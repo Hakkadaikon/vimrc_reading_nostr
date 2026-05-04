@@ -49,6 +49,7 @@ export function MessageForm({ onSubmit, disabled }: MessageFormProps) {
 	};
 
 	const canSend = !disabled && !sending && content.trim().length > 0;
+	const isMultiline = content.includes("\n") || content.length > 60;
 
 	return (
 		<form
@@ -72,7 +73,11 @@ export function MessageForm({ onSubmit, disabled }: MessageFormProps) {
 				<button
 					type="submit"
 					disabled={!canSend}
-					className={`absolute right-2 top-1/2 -translate-y-[calc(50%+3px)] rounded p-1 transition ${
+					className={`absolute right-2 rounded p-1 transition ${
+						isMultiline
+							? "bottom-2"
+							: "top-1/2 -translate-y-[calc(50%+3px)]"
+					} ${
 						canSend
 							? "text-[var(--accent)] hover:bg-[var(--accent-soft)]"
 							: "text-[var(--fg-mute)] opacity-50"
