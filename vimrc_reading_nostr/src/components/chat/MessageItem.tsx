@@ -60,14 +60,7 @@ export function MessageItem({
 	}, [message.content]);
 
 	if (isDeleted) {
-		return (
-			<div
-				id={`msg-${message.id}`}
-				className="px-4 py-2 text-sm text-[var(--fg-mute)] italic"
-			>
-				このメッセージは削除されました
-			</div>
-		);
+		return null;
 	}
 
 	return (
