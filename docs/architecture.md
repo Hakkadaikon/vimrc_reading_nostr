@@ -111,21 +111,35 @@ vimrc_reading_nostr/src/
 │   └── common/          # 共通UI（ConnectionStatus）
 ├── hooks/               # カスタムフック（useRelayPool: シングルトンリレープール管理）
 ├── lib/                 # ユーティリティ・ビジネスロジック
-│   └── nostr/           # Nostrプロトコル関連（relay, events, channel, keys, reactions, participants）
+│   ├── github.ts        # GitHubファイルリンク解析・コードプレビュー
+│   ├── markdown.ts      # Markdownレンダリング（marked + DOMPurify）
+│   └── nostr/           # Nostrプロトコル関連
+│       ├── channel.ts       # NIP-28チャンネルフィルタ生成
+│       ├── events.ts        # イベントテンプレー��生成（kind:0,5,42）
+│       ├── keys.ts          # 鍵ペア生成、nsecエンコード/デコード
+│       ├── nip07.ts         # NIP-07ブラウザ拡張連携
+│       ├── nip19.ts         # bech32エンコード（npub, nevent）
+│       ├── participants.ts  # 当日参加者リスト算出
+│       ├── profile-cache.ts # プロフィールlocalStorageキャッシュ
+│       ├── reactions.ts     # リアクションイベント生成
+│       ├── relay-config.ts  # リレーURL設定管理
+│       ├── relay-discovery.ts # プロフィール解決（リレー+directory問い合わせ）
+│       ├── metadata.ts      # kind:0メタデータパース
+│       └── time.ts          # Unix時刻ユーティリティ
 ├── stores/              # Zustand ストア定義（auth, message, profile, relay, reaction, settings）
-├── types/               # TypeScript型定義
 └── styles/              # グローバルスタイル（styles.css）
 ```
 
 ## UI/UX方針
 
-- **シングルページ構成**: チャット画面が常にメイン。ルーティングは最小限
-- **レスポンシブ**: モバイル対応は後回し（SHOULD）。まずデスクトップで動くものを作る
+- **シングルページ構成**: チャット画面が常にメイン。設定画面のみ別ルート
+- **レスポンシブ対応**: モバイル（ドロワー式参加者リスト）とデスクトップ（リサイズ可能サイドバー）
+- **テーマ**: Vim/ターミナル風ダーク固定（gruvbox系カラー、JetBrains Monoフォント）
 - **画面構成**:
-  - ヘッダー: チャンネル名 + 接続状態 + 設定リンク + ログイン/プロフィール
-  - 左ペイン: 当日の参加者リスト（JSTで当日0:00〜翌日AM2:00に発言した人のアイコン・名前をnjump.meリンク付きで表示）
-  - メイン: メッセージ一覧（時系列、下が最新）
-  - フッター: 投稿フォーム（未ログイン時はログインボタン）
+  - ヘッダー: チャンネル名 + リレー接続状態（クリックで詳細） + ユーザー名 + 設定/ログイン/ログアウト
+  - 左ペイン: 当日の参加者リスト（AM5:00 JST切り替え、presence dot付き）
+  - メイン: メッセージ一覧（時系列、下が最新、行番号ガター風タイムスタンプ）
+  - フッター: 投稿フォーム（Slackライク送信アイコン、自動高さ調整）、未ログイン時はログイン促進バー
 
 ## 認証方式
 
