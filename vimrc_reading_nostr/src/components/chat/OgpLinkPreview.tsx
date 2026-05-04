@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchOgp } from "#/routes/api/ogp";
+import { fetchOgp } from "#/lib/ogp-server";
 
 type OgpData = {
 	title?: string;
