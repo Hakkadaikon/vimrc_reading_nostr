@@ -345,10 +345,12 @@ function ChatPage() {
 			} else {
 				return;
 			}
-			// Optimistic update: 投稿を即座にUIに反映
-			const msg = signedEvent as NostrMessage;
-			useMessageStore.getState().addMessage(msg);
-			useMessageStore.getState().appendAndPersist([msg]);
+			// Optimistic update: kind:42の投稿のみ即座にUIに反映
+			if (signedEvent.kind === 42) {
+				const msg = signedEvent as NostrMessage;
+				useMessageStore.getState().addMessage(msg);
+				useMessageStore.getState().appendAndPersist([msg]);
+			}
 			await publish(signedEvent);
 		},
 		[publicKey, secretKey, loginMethod, publish],
@@ -378,6 +380,8 @@ function ChatPage() {
 
 	const handleDelete = useCallback(
 		async (eventId: string) => {
+			// Optimistic: 即座にUIとlocalStorageから削除
+			useMessageStore.getState().deleteMessage(eventId);
 			const template = createDeleteEvent(eventId);
 			await signAndPublish(template);
 		},
