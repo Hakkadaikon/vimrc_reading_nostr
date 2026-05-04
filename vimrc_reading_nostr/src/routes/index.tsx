@@ -446,7 +446,7 @@ function ChatPage() {
 						{isLoggedIn ? (
 							<MessageForm onSubmit={handleSendMessage} />
 						) : (
-							<div className="sticky bottom-0 border-t border-gray-200 bg-white p-3 text-center text-sm text-[var(--sea-ink-soft)] md:p-4 dark:border-gray-700 dark:bg-gray-900">
+							<div className="shrink-0 border-t border-gray-200 bg-white p-3 text-center text-sm text-[var(--sea-ink-soft)] md:p-4 dark:border-gray-700 dark:bg-gray-900">
 								<button
 									type="button"
 									onClick={() => setShowLogin(true)}
