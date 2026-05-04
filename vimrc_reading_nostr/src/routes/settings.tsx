@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { LogIn, LogOut, Settings } from "lucide-react";
+import { Home, LogIn, LogOut } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { UserInfo } from "#/components/auth/UserInfo";
 import { ConnectionStatus } from "#/components/common/ConnectionStatus";
@@ -123,12 +123,6 @@ function SettingsHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
 	return (
 		<div className="relative z-50 flex items-center justify-between border-b border-[var(--line)] bg-[var(--bg-pane)] px-3 py-2 md:px-5 md:py-3">
 			<div className="flex items-center gap-2 md:gap-4">
-				<Link
-					to="/"
-					className="text-sm text-[var(--fg-dim)] hover:text-[var(--accent)]"
-				>
-					← 戻る
-				</Link>
 				<h1 className="text-base font-bold text-[var(--fg)] md:text-lg">
 					設定
 				</h1>
@@ -142,10 +136,10 @@ function SettingsHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
 				)}
 				<Link
 					to="/"
-					className="rounded p-2 text-[var(--accent)]"
-					title="設定を閉じる"
+					className="rounded p-2 text-[var(--accent)] hover:bg-[var(--bg-elev-2)]"
+					title="ホームに戻る"
 				>
-					<Settings className="h-5 w-5 md:h-6 md:w-6" />
+					<Home className="h-5 w-5 md:h-6 md:w-6" />
 				</Link>
 				{isLoggedIn ? (
 					<button
