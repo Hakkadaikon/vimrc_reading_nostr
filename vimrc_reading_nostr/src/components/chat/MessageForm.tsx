@@ -1,4 +1,10 @@
-import { type FormEvent, type KeyboardEvent, useState } from "react";
+import {
+	type FormEvent,
+	type KeyboardEvent,
+	useCallback,
+	useRef,
+	useState,
+} from "react";
 
 type MessageFormProps = {
 	onSubmit: (content: string) => void;
@@ -8,6 +14,14 @@ type MessageFormProps = {
 export function MessageForm({ onSubmit, disabled }: MessageFormProps) {
 	const [content, setContent] = useState("");
 	const [sending, setSending] = useState(false);
+	const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+	const adjustHeight = useCallback(() => {
+		const el = textareaRef.current;
+		if (!el) return;
+		el.style.height = "auto";
+		el.style.height = `${Math.min(el.scrollHeight, 180)}px`;
+	}, []);
 
 	const handleSubmit = async (e?: FormEvent) => {
 		e?.preventDefault();
@@ -18,6 +32,9 @@ export function MessageForm({ onSubmit, disabled }: MessageFormProps) {
 		try {
 			onSubmit(trimmed);
 			setContent("");
+			if (textareaRef.current) {
+				textareaRef.current.style.height = "auto";
+			}
 		} finally {
 			setSending(false);
 		}
@@ -39,12 +56,16 @@ export function MessageForm({ onSubmit, disabled }: MessageFormProps) {
 				&gt;
 			</span>
 			<textarea
+				ref={textareaRef}
 				value={content}
-				onChange={(e) => setContent(e.target.value)}
+				onChange={(e) => {
+					setContent(e.target.value);
+					adjustHeight();
+				}}
 				onKeyDown={handleKeyDown}
 				placeholder="メッセージを入力... (Ctrl+Enterで送信)"
 				disabled={disabled || sending}
-				rows={2}
+				rows={1}
 				className="flex-1 resize-none rounded border border-[var(--line)] bg-[var(--bg-pane)] px-3 py-2 text-sm text-[var(--fg)] outline-none placeholder:text-[var(--fg-mute)] focus:border-[var(--accent)] disabled:opacity-50"
 			/>
 			<button
