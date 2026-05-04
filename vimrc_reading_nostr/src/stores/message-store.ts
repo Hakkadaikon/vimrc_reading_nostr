@@ -123,8 +123,19 @@ export const useMessageStore = create<MessageState>((set, get) => ({
 			}
 			const newDeleted = new Set(state.deletedIds);
 			newDeleted.add(eventId);
-			return { deletedIds: newDeleted };
+			// UIからも除去
+			const messages = state.messages.filter((m) => m.id !== eventId);
+			const newIds = new Set(state.messageIds);
+			newIds.delete(eventId);
+			return { deletedIds: newDeleted, messages, messageIds: newIds };
 		});
+		// localStorageからも削除
+		const all = getAllFromStorage();
+		const filtered = all.filter((m) => m.id !== eventId);
+		if (filtered.length < all.length) {
+			parsedStorageCache = filtered;
+			scheduleWrite(filtered);
+		}
 	},
 
 	clearMessages: () => {
