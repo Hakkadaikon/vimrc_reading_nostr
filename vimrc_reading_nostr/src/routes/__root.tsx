@@ -24,6 +24,22 @@ export const Route = createRootRoute({
 			{
 				title: "vimrc読書会",
 			},
+			{
+				property: "og:title",
+				content: "vimrc読書会",
+			},
+			{
+				property: "og:image",
+				content: "https://vimrc-reading.hakkadaikon.com/ogp.png",
+			},
+			{
+				property: "og:type",
+				content: "website",
+			},
+			{
+				name: "twitter:card",
+				content: "summary_large_image",
+			},
 		],
 		links: [
 			{
