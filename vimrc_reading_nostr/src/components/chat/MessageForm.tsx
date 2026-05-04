@@ -1,3 +1,4 @@
+import { SendHorizonal } from "lucide-react";
 import {
 	type FormEvent,
 	type KeyboardEvent,
@@ -47,34 +48,39 @@ export function MessageForm({ onSubmit, disabled }: MessageFormProps) {
 		}
 	};
 
+	const canSend = !disabled && !sending && content.trim().length > 0;
+
 	return (
 		<form
 			onSubmit={handleSubmit}
-			className="flex shrink-0 items-center gap-2 border-t border-[var(--line)] bg-[var(--bg-pane)] p-2 md:p-3"
+			className="shrink-0 border-t border-[var(--line)] bg-[var(--bg-pane)] p-2 md:p-3"
 		>
-			<span className="flex-shrink-0 text-[var(--accent)] font-bold text-sm select-none">
-				&gt;
-			</span>
-			<textarea
-				ref={textareaRef}
-				value={content}
-				onChange={(e) => {
-					setContent(e.target.value);
-					adjustHeight();
-				}}
-				onKeyDown={handleKeyDown}
-				placeholder="メッセージを入力... (Ctrl+Enterで送信)"
-				disabled={disabled || sending}
-				rows={1}
-				className="flex-1 resize-none rounded border border-[var(--line)] bg-[var(--bg-pane)] px-3 py-2 text-sm text-[var(--fg)] outline-none placeholder:text-[var(--fg-mute)] focus:border-[var(--accent)] disabled:opacity-50"
-			/>
-			<button
-				type="submit"
-				disabled={disabled || sending || !content.trim()}
-				className="self-center rounded bg-[var(--accent)] px-3 py-1.5 text-xs font-semibold text-[var(--bg)] transition hover:bg-[var(--accent-strong)] disabled:opacity-50 md:px-4 md:py-2 md:text-sm"
-			>
-				{sending ? "送信中..." : "投稿"}
-			</button>
+			<div className="relative">
+				<textarea
+					ref={textareaRef}
+					value={content}
+					onChange={(e) => {
+						setContent(e.target.value);
+						adjustHeight();
+					}}
+					onKeyDown={handleKeyDown}
+					placeholder="メッセージを入力... (Ctrl+Enterで送信)"
+					disabled={disabled || sending}
+					rows={1}
+					className="w-full resize-none rounded border border-[var(--line)] bg-[var(--bg)] py-2 pl-3 pr-10 text-sm text-[var(--fg)] outline-none placeholder:text-[var(--fg-mute)] focus:border-[var(--accent)] disabled:opacity-50"
+				/>
+				<button
+					type="submit"
+					disabled={!canSend}
+					className={`absolute bottom-2 right-2 rounded p-1 transition ${
+						canSend
+							? "text-[var(--accent)] hover:bg-[var(--accent-soft)]"
+							: "text-[var(--fg-mute)] opacity-50"
+					}`}
+				>
+					<SendHorizonal className="h-5 w-5" />
+				</button>
+			</div>
 		</form>
 	);
 }
