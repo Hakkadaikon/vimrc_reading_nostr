@@ -53,14 +53,6 @@ describe("useProfileStore", () => {
 		expect(useProfileStore.getState().needsFetch("pubkey1")).toBe(false);
 	});
 
-	it("未取得のpubkeyを一括で取得できる", () => {
-		useProfileStore.getState().markRequested("pubkey1");
-		const needed = useProfileStore
-			.getState()
-			.getUnfetchedPubkeys(["pubkey1", "pubkey2", "pubkey3"]);
-		expect(needed).toEqual(["pubkey2", "pubkey3"]);
-	});
-
 	it("clearProfilesで取得済みフラグもクリアされる", () => {
 		useProfileStore.getState().markRequested("pubkey1");
 		useProfileStore.getState().clearProfiles();

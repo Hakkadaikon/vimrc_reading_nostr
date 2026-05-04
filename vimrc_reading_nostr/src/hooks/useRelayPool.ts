@@ -1,7 +1,7 @@
 import type { Event } from "nostr-tools/core";
 import type { Filter } from "nostr-tools/filter";
 import { Relay } from "nostr-tools/relay";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { getRelayUrls } from "#/lib/nostr/relay-config";
 import { useRelayStore } from "#/stores/relay-store";
 
@@ -161,14 +161,10 @@ function subscribe(
 // --- React hook: manages lifecycle (connect on first mount, disconnect when all unmount) ---
 
 export function useRelayPool() {
-	const mountedRef = useRef(false);
-
 	useEffect(() => {
-		mountedRef.current = true;
 		mountCount++;
 		connectAll();
 		return () => {
-			mountedRef.current = false;
 			mountCount--;
 			if (mountCount === 0) {
 				disconnectAll();

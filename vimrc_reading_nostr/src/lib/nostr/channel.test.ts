@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-	CHANNEL_ID,
-	createChannelMessageFilter,
-	createChannelMetadataFilter,
-} from "./channel";
+import { CHANNEL_ID, createChannelMessageFilter } from "./channel";
 
 describe("CHANNEL_ID", () => {
 	it("チャンネルIDが設定されている", () => {
@@ -32,13 +28,5 @@ describe("createChannelMessageFilter", () => {
 		const since = Math.floor(Date.now() / 1000) - 3600;
 		const filter = createChannelMessageFilter({ since });
 		expect(filter.since).toBe(since);
-	});
-});
-
-describe("createChannelMetadataFilter", () => {
-	it("kind:40のフィルタをチャンネルIDで生成する", () => {
-		const filter = createChannelMetadataFilter();
-		expect(filter.kinds).toEqual([40]);
-		expect(filter.ids).toEqual([CHANNEL_ID]);
 	});
 });

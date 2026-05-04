@@ -98,54 +98,39 @@ describe("localStorage キャッシュ", () => {
 
 	beforeEach(() => {
 		useMessageStore.getState().clearMessages();
-		useMessageStore.getState().setInitialLoading(true);
+		useMessageStore.setState({ isInitialLoading: true });
 		mockStorage.clear();
 		vi.clearAllMocks();
 	});
 
-	it("saveToLocalStorageで現在のメッセージをlocalStorageに保存できる", () => {
-		useMessageStore.getState().addMessage(makeEvent("id1", "Hello", 1000));
-		useMessageStore.getState().addMessage(makeEvent("id2", "World", 2000));
-		useMessageStore.getState().saveToLocalStorage();
-
-		const stored = JSON.parse(mockStorage.get(STORAGE_KEY) as string);
-		expect(stored).toHaveLength(2);
-		expect(stored[0].content).toBe("Hello");
-		expect(stored[1].content).toBe("World");
-	});
-
-	it("loadFromLocalStorageでlocalStorageからメッセージを復元できる", () => {
+	it("loadLatestPageでlocalStorageから最新メッセージを復元できる", () => {
 		const events = [
 			makeEvent("id1", "Cached1", 1000),
 			makeEvent("id2", "Cached2", 2000),
 		];
 		mockStorage.set(STORAGE_KEY, JSON.stringify(events));
 
-		useMessageStore.getState().loadFromLocalStorage();
+		useMessageStore.getState().loadLatestPage();
 		const messages = useMessageStore.getState().messages;
 		expect(messages).toHaveLength(2);
 		expect(messages[0].content).toBe("Cached1");
 		expect(messages[1].content).toBe("Cached2");
+		expect(useMessageStore.getState().isInitialLoading).toBe(false);
 	});
 
-	it("localStorageが空の場合loadFromLocalStorageは何もしない", () => {
-		useMessageStore.getState().loadFromLocalStorage();
+	it("localStorageが空の場合loadLatestPageは何もしない", () => {
+		useMessageStore.getState().loadLatestPage();
 		expect(useMessageStore.getState().messages).toEqual([]);
 	});
 
-	it("localStorageのデータが壊れている場合loadFromLocalStorageは何もしない", () => {
+	it("localStorageのデータが壊れている場合loadLatestPageは何もしない", () => {
 		mockStorage.set(STORAGE_KEY, "invalid json{{{");
-		useMessageStore.getState().loadFromLocalStorage();
+		useMessageStore.getState().loadLatestPage();
 		expect(useMessageStore.getState().messages).toEqual([]);
 	});
 
 	it("初期状態ではisInitialLoadingがtrueである", () => {
 		expect(useMessageStore.getState().isInitialLoading).toBe(true);
-	});
-
-	it("setInitialLoadingでロード状態を変更できる", () => {
-		useMessageStore.getState().setInitialLoading(false);
-		expect(useMessageStore.getState().isInitialLoading).toBe(false);
 	});
 
 	it("loadOlderPageでuntil以前の未取得メッセージを返す", () => {

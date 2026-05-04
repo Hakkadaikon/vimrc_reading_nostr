@@ -3,7 +3,7 @@ import { useReactionStore } from "./reaction-store";
 
 describe("useReactionStore", () => {
 	beforeEach(() => {
-		useReactionStore.getState().clearReactions();
+		useReactionStore.setState({ reactions: {} });
 	});
 
 	it("初期状態ではリアクションが空", () => {
@@ -16,9 +16,7 @@ describe("useReactionStore", () => {
 			pubkey: "pubkey1",
 			content: "+",
 		});
-		const reactions = useReactionStore.getState().getReactions("event1");
-		expect(reactions).toHaveLength(1);
-		expect(reactions[0].content).toBe("+");
+		expect(useReactionStore.getState().getReactionCount("event1")).toBe(1);
 	});
 
 	it("同じイベントに複数リアクションを追加できる", () => {
@@ -32,7 +30,7 @@ describe("useReactionStore", () => {
 			pubkey: "pubkey2",
 			content: "+",
 		});
-		expect(useReactionStore.getState().getReactions("event1")).toHaveLength(2);
+		expect(useReactionStore.getState().getReactionCount("event1")).toBe(2);
 	});
 
 	it("同じリアクションIDは重複追加されない", () => {
@@ -46,7 +44,7 @@ describe("useReactionStore", () => {
 			pubkey: "pubkey1",
 			content: "+",
 		});
-		expect(useReactionStore.getState().getReactions("event1")).toHaveLength(1);
+		expect(useReactionStore.getState().getReactionCount("event1")).toBe(1);
 	});
 
 	it("リアクション数を取得できる", () => {

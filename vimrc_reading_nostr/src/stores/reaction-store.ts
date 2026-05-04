@@ -9,9 +9,7 @@ export type Reaction = {
 type ReactionState = {
 	reactions: Record<string, Reaction[]>;
 	addReaction: (eventId: string, reaction: Reaction) => void;
-	getReactions: (eventId: string) => Reaction[];
 	getReactionCount: (eventId: string) => number;
-	clearReactions: () => void;
 };
 
 export const useReactionStore = create<ReactionState>((set, get) => ({
@@ -32,15 +30,7 @@ export const useReactionStore = create<ReactionState>((set, get) => ({
 		});
 	},
 
-	getReactions: (eventId) => {
-		return get().reactions[eventId] ?? [];
-	},
-
 	getReactionCount: (eventId) => {
 		return (get().reactions[eventId] ?? []).length;
-	},
-
-	clearReactions: () => {
-		set({ reactions: {} });
 	},
 }));

@@ -23,14 +23,10 @@ type MessageState = {
 	addMessages: (events: NostrMessage[]) => void;
 	deleteMessage: (eventId: string) => void;
 	clearMessages: () => void;
-	setInitialLoading: (loading: boolean) => void;
 	setHasMore: (hasMore: boolean) => void;
 	getOldestTimestamp: () => number | undefined;
-	saveToLocalStorage: () => void;
-	loadFromLocalStorage: () => void;
 	loadLatestPage: () => void;
 	loadOlderPage: (until: number) => NostrMessage[];
-	// localStorageにイベントを追記（バッチ対応）
 	appendAndPersist: (events: NostrMessage[]) => void;
 };
 
@@ -143,16 +139,6 @@ export const useMessageStore = create<MessageState>((set, get) => ({
 		});
 	},
 
-	saveToLocalStorage: () => {
-		const messages = get().messages;
-		parsedStorageCache = null;
-		scheduleWrite(messages);
-	},
-
-	loadFromLocalStorage: () => {
-		get().loadLatestPage();
-	},
-
 	loadLatestPage: () => {
 		const all = getAllFromStorage();
 		if (all.length === 0) return;
@@ -170,11 +156,9 @@ export const useMessageStore = create<MessageState>((set, get) => ({
 	loadOlderPage: (until: number): NostrMessage[] => {
 		const all = getAllFromStorage();
 		const { messageIds } = get();
-		// allは既にcreated_at昇順。filterで順序維持されるのでslice末尾がuntil直前の最新
 		const older = all.filter(
 			(e) => e.created_at < until && !messageIds.has(e.id),
 		);
-		// 末尾からPAGE_SIZE件（最新に近い方を優先）
 		return older.slice(-PAGE_SIZE).reverse();
 	},
 
@@ -189,10 +173,6 @@ export const useMessageStore = create<MessageState>((set, get) => ({
 		);
 		parsedStorageCache = merged;
 		scheduleWrite(merged);
-	},
-
-	setInitialLoading: (loading) => {
-		set({ isInitialLoading: loading });
 	},
 
 	setHasMore: (hasMore) => {

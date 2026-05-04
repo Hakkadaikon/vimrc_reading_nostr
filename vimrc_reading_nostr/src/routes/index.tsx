@@ -47,7 +47,7 @@ function ChatPage() {
 	const addMessage = useMessageStore((s) => s.addMessage);
 	const deleteMessage = useMessageStore((s) => s.deleteMessage);
 	const isInitialLoading = useMessageStore((s) => s.isInitialLoading);
-	const loadFromLocalStorage = useMessageStore((s) => s.loadFromLocalStorage);
+	const loadLatestPage = useMessageStore((s) => s.loadLatestPage);
 	const hasMore = useMessageStore((s) => s.hasMore);
 	const setHasMore = useMessageStore((s) => s.setHasMore);
 	const setProfile = useProfileStore((s) => s.setProfile);
@@ -66,8 +66,8 @@ function ChatPage() {
 
 	// 起動時にlocalStorageから最新PAGE_SIZE件を復元してUI表示
 	useEffect(() => {
-		loadFromLocalStorage();
-	}, [loadFromLocalStorage]);
+		loadLatestPage();
+	}, [loadLatestPage]);
 
 	// バックグラウンド同期用バッファ（デバウンスしてlocalStorageに書き込む）
 	const bgBufferRef = useRef<NostrMessage[]>([]);

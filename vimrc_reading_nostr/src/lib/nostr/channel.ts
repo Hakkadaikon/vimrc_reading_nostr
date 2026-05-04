@@ -30,9 +30,3 @@ export function createChannelMessageFilter(
 	return filter;
 }
 
-export function createChannelMetadataFilter(): Filter {
-	return {
-		kinds: [40],
-		ids: [CHANNEL_ID],
-	};
-}

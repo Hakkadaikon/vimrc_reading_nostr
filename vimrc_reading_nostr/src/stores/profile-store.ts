@@ -18,7 +18,6 @@ type ProfileState = {
 	getDisplayName: (pubkey: string) => string;
 	needsFetch: (pubkey: string) => boolean;
 	markRequested: (pubkey: string) => void;
-	getUnfetchedPubkeys: (pubkeys: string[]) => string[];
 	clearProfiles: () => void;
 };
 
@@ -63,17 +62,6 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
 		set((state) => ({
 			requestedAt: { ...state.requestedAt, [pubkey]: Date.now() },
 		}));
-	},
-
-	getUnfetchedPubkeys: (pubkeys) => {
-		const state = get();
-		const now = Date.now();
-		return pubkeys.filter((pk) => {
-			if (state.profiles[pk]) return false;
-			const ts = state.requestedAt[pk];
-			if (!ts) return true;
-			return now - ts > REQUEST_TTL_MS;
-		});
 	},
 
 	clearProfiles: () => {

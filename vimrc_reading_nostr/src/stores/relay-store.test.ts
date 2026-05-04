@@ -3,7 +3,7 @@ import { useRelayStore } from "./relay-store";
 
 describe("useRelayStore", () => {
 	beforeEach(() => {
-		useRelayStore.getState().clearStatuses();
+		useRelayStore.setState({ statuses: {} });
 	});
 
 	it("初期状態ではリレーステータスが空", () => {
@@ -28,20 +28,5 @@ describe("useRelayStore", () => {
 		expect(useRelayStore.getState().statuses["wss://relay2.example.com"]).toBe(
 			"connecting",
 		);
-	});
-
-	it("接続済みリレーが1つ以上あればisAnyConnectedがtrue", () => {
-		useRelayStore
-			.getState()
-			.setStatus("wss://relay1.example.com", "disconnected");
-		useRelayStore.getState().setStatus("wss://relay2.example.com", "connected");
-		expect(useRelayStore.getState().isAnyConnected()).toBe(true);
-	});
-
-	it("接続済みリレーが0ならisAnyConnectedがfalse", () => {
-		useRelayStore
-			.getState()
-			.setStatus("wss://relay1.example.com", "disconnected");
-		expect(useRelayStore.getState().isAnyConnected()).toBe(false);
 	});
 });
