@@ -483,22 +483,22 @@ const ChatHeader = memo(function ChatHeader({
 	onShowLogin,
 }: ChatHeaderProps) {
 	return (
-		<div className="relative z-50 flex h-6 items-center justify-between border-b border-[var(--line)] bg-[var(--bg-pane)] px-3 py-4 md:px-4">
-			<div className="flex items-center gap-2 md:gap-3">
+		<div className="relative z-50 flex items-center justify-between border-b border-[var(--line)] bg-[var(--bg-pane)] px-3 py-2 md:px-5 md:py-3">
+			<div className="flex items-center gap-2 md:gap-4">
 				<button
 					type="button"
 					onClick={onToggleParticipants}
-					className="rounded p-1.5 text-[var(--fg-dim)] hover:bg-[var(--bg-elev-2)] md:hidden"
+					className="rounded p-2 text-[var(--fg-dim)] hover:bg-[var(--bg-elev-2)] md:hidden"
 					title="参加者"
 				>
-					<Users className="h-4 w-4" />
+					<Users className="h-5 w-5" />
 				</button>
-				<h1 className="text-sm font-bold text-[var(--fg)]">
+				<h1 className="text-base font-bold text-[var(--fg)] md:text-lg">
 					vimrc読書会
 				</h1>
 				<ConnectionStatus />
 			</div>
-			<div className="flex items-center gap-2 md:gap-3">
+			<div className="flex items-center gap-2 md:gap-4">
 				{isLoggedIn && (
 					<span className="hidden md:inline-flex">
 						<UserInfo />
@@ -506,28 +506,28 @@ const ChatHeader = memo(function ChatHeader({
 				)}
 				<Link
 					to="/settings"
-					className="rounded p-1.5 text-[var(--fg-dim)] hover:bg-[var(--bg-elev-2)]"
+					className="rounded p-2 text-[var(--fg-dim)] hover:bg-[var(--bg-elev-2)]"
 					title="設定"
 				>
-					<Settings className="h-4 w-4" />
+					<Settings className="h-5 w-5 md:h-6 md:w-6" />
 				</Link>
 				{isLoggedIn ? (
 					<button
 						type="button"
 						onClick={() => useAuthStore.getState().logout()}
-						className="rounded p-1.5 text-[var(--fg-dim)] hover:bg-[var(--bg-elev-2)]"
+						className="rounded p-2 text-[var(--fg-dim)] hover:bg-[var(--bg-elev-2)]"
 						title="ログアウト"
 					>
-						<LogOut className="h-4 w-4" />
+						<LogOut className="h-5 w-5 md:h-6 md:w-6" />
 					</button>
 				) : (
 					<button
 						type="button"
 						onClick={onShowLogin}
-						className="rounded p-1.5 text-[var(--fg-dim)] hover:bg-[var(--bg-elev-2)]"
+						className="rounded p-2 text-[var(--fg-dim)] hover:bg-[var(--bg-elev-2)]"
 						title="ログイン"
 					>
-						<LogIn className="h-4 w-4" />
+						<LogIn className="h-5 w-5 md:h-6 md:w-6" />
 					</button>
 				)}
 			</div>
