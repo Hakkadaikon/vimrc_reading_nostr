@@ -13,55 +13,17 @@ type OgpLinkPreviewProps = {
 
 const cache = new Map<string, OgpData | null>();
 
+const OGP_PROXY_URL = "https://ogp-proxy.kirikabuobake.workers.dev";
+
 async function fetchOgpData(url: string): Promise<OgpData | null> {
 	try {
-		const res = await fetch(url, {
-			mode: "cors",
-			headers: { Accept: "text/html" },
-		});
+		const res = await fetch(`${OGP_PROXY_URL}/?url=${encodeURIComponent(url)}`);
 		if (!res.ok) return null;
-
-		const contentType = res.headers.get("content-type") ?? "";
-		if (!contentType.includes("text/html")) return null;
-
-		const html = await res.text();
-		return parseOgpFromHtml(html, url);
+		const data: OgpData = await res.json();
+		return data.title ? data : null;
 	} catch {
 		return null;
 	}
-}
-
-function getMetaContent(html: string, property: string): string | undefined {
-	const pattern = new RegExp(
-		`<meta[^>]+(?:property|name)=["']${property}["'][^>]+content=["']([^"']*)["']|<meta[^>]+content=["']([^"']*)["'][^>]+(?:property|name)=["']${property}["']`,
-		"i",
-	);
-	const match = html.match(pattern);
-	return match?.[1] ?? match?.[2] ?? undefined;
-}
-
-function parseOgpFromHtml(html: string, url: string): OgpData | null {
-	const title =
-		getMetaContent(html, "og:title") ??
-		html.match(/<title[^>]*>([^<]*)<\/title>/i)?.[1]?.trim();
-
-	if (!title) return null;
-
-	const description =
-		getMetaContent(html, "og:description") ??
-		getMetaContent(html, "description");
-	let image = getMetaContent(html, "og:image");
-	const siteName = getMetaContent(html, "og:site_name");
-
-	if (image && !image.startsWith("http")) {
-		try {
-			image = new URL(image, url).href;
-		} catch {
-			image = undefined;
-		}
-	}
-
-	return { title, description, image, siteName };
 }
 
 export function OgpLinkPreview({ url }: OgpLinkPreviewProps) {
