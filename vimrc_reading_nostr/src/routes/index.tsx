@@ -345,6 +345,10 @@ function ChatPage() {
 			} else {
 				return;
 			}
+			// Optimistic update: 投稿を即座にUIに反映
+			const msg = signedEvent as NostrMessage;
+			useMessageStore.getState().addMessage(msg);
+			useMessageStore.getState().appendAndPersist([msg]);
 			await publish(signedEvent);
 		},
 		[publicKey, secretKey, loginMethod, publish],

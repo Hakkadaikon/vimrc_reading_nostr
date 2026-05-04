@@ -8,7 +8,7 @@ import {
 } from "react";
 
 type MessageFormProps = {
-	onSubmit: (content: string) => void;
+	onSubmit: (content: string) => void | Promise<void>;
 	disabled?: boolean;
 };
 
@@ -31,7 +31,7 @@ export function MessageForm({ onSubmit, disabled }: MessageFormProps) {
 
 		setSending(true);
 		try {
-			onSubmit(trimmed);
+			await onSubmit(trimmed);
 			setContent("");
 			if (textareaRef.current) {
 				textareaRef.current.style.height = "auto";
