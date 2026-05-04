@@ -87,7 +87,7 @@ export const useMessageStore = create<MessageState>((set, get) => ({
 
 	addMessage: (event) => {
 		set((state) => {
-			if (state.messageIds.has(event.id)) {
+			if (state.messageIds.has(event.id) || state.deletedIds.has(event.id)) {
 				return state;
 			}
 			const newIds = new Set(state.messageIds);
@@ -105,7 +105,7 @@ export const useMessageStore = create<MessageState>((set, get) => ({
 			const newIds = new Set(state.messageIds);
 			let added = 0;
 			for (const event of events) {
-				if (!newIds.has(event.id)) {
+				if (!newIds.has(event.id) && !state.deletedIds.has(event.id)) {
 					newIds.add(event.id);
 					messages = binaryInsert(messages, event);
 					added++;
@@ -175,9 +175,12 @@ export const useMessageStore = create<MessageState>((set, get) => ({
 
 	appendAndPersist: (events) => {
 		if (events.length === 0) return;
+		const { deletedIds } = get();
 		const all = getAllFromStorage();
 		const existingIds = new Set(all.map((m) => m.id));
-		const newEvents = events.filter((e) => !existingIds.has(e.id));
+		const newEvents = events.filter(
+			(e) => !existingIds.has(e.id) && !deletedIds.has(e.id),
+		);
 		if (newEvents.length === 0) return;
 		const merged = [...all, ...newEvents].sort(
 			(a, b) => a.created_at - b.created_at,
