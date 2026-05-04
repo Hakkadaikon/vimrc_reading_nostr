@@ -59,8 +59,18 @@ function getAllFromStorage(): NostrMessage[] {
 		if (!stored) return [];
 		const parsed: NostrMessage[] = JSON.parse(stored);
 		if (!Array.isArray(parsed)) return [];
-		parsedStorageCache = parsed;
-		return parsed;
+		// IDで重複排除（後のエントリを優先）
+		const seen = new Set<string>();
+		const deduped: NostrMessage[] = [];
+		for (let i = parsed.length - 1; i >= 0; i--) {
+			if (!seen.has(parsed[i].id)) {
+				seen.add(parsed[i].id);
+				deduped.push(parsed[i]);
+			}
+		}
+		deduped.reverse();
+		parsedStorageCache = deduped;
+		return deduped;
 	} catch {
 		return [];
 	}
