@@ -24,6 +24,7 @@ export function MessageList({
 	const containerRef = useRef<HTMLDivElement>(null);
 	const isNearBottomRef = useRef(true);
 	const isFirstRenderRef = useRef(true);
+	const prevNewestIdRef = useRef<string | null>(null);
 
 	useEffect(() => {
 		const container = containerRef.current;
@@ -38,14 +39,20 @@ export function MessageList({
 		return () => container.removeEventListener("scroll", handleScroll);
 	}, []);
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: messages.lengthの変化でスクロールをトリガーする
+	// 新着メッセージ到着時のみauto-scroll（過去メッセージ追加時はスキップ）
 	useEffect(() => {
+		if (messages.length === 0) return;
+		const newestId = messages[messages.length - 1].id;
+		// 最新メッセージが変わっていない = 過去メッセージの追加 → スクロールしない
+		if (prevNewestIdRef.current === newestId) return;
+		prevNewestIdRef.current = newestId;
+
 		if (isNearBottomRef.current) {
 			const behavior = isFirstRenderRef.current ? "instant" : "smooth";
 			isFirstRenderRef.current = false;
 			bottomRef.current?.scrollIntoView({ behavior });
 		}
-	}, [messages.length]);
+	}, [messages]);
 
 	const scrolledToHighlightRef = useRef(false);
 	const prevHighlightIdRef = useRef(highlightedEventId);
