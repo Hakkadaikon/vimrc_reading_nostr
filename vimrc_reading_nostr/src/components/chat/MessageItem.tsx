@@ -1,6 +1,7 @@
 import { Check, Copy, Trash2 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { extractGitHubFileLinks } from "#/lib/github";
+import { extractOgpLinks } from "#/lib/link-extract";
 import { renderMarkdown } from "#/lib/markdown";
 import { encodeNevent } from "#/lib/nostr/nip19";
 import { useAuthStore } from "#/stores/auth-store";
@@ -10,6 +11,7 @@ import { useProfileStore } from "#/stores/profile-store";
 import { useReactionStore } from "#/stores/reaction-store";
 import { useSettingsStore } from "#/stores/settings-store";
 import { GitHubCodePreview } from "./GitHubCodePreview";
+import { OgpLinkPreview } from "./OgpLinkPreview";
 
 type MessageItemProps = {
 	message: NostrMessage;
@@ -50,6 +52,11 @@ export function MessageItem({
 	const githubLinks = useMemo(
 		() => (githubPreviewEnabled ? extractGitHubFileLinks(message.content) : []),
 		[message.content, githubPreviewEnabled],
+	);
+
+	const ogpLinks = useMemo(
+		() => extractOgpLinks(message.content),
+		[message.content],
 	);
 
 	const [copied, setCopied] = useState(false);
@@ -111,6 +118,13 @@ export function MessageItem({
 					<div className="mt-2 space-y-2">
 						{githubLinks.map((link) => (
 							<GitHubCodePreview key={link.url} link={link} />
+						))}
+					</div>
+				)}
+				{ogpLinks.length > 0 && (
+					<div className="mt-2 space-y-2">
+						{ogpLinks.map((url) => (
+							<OgpLinkPreview key={url} url={url} />
 						))}
 					</div>
 				)}
