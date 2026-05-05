@@ -12,8 +12,6 @@
 
 ## Phase 0: 設計決定（実装前に確定が必要）
 
-> 担当: `/vimrc-reading-architecture` → 成果物は `docs/architecture.md`
-
 - [x] Nostrライブラリ選定 → nostr-tools（ADR-001）
 - [x] リレーサーバー構成の決定 → 環境変数管理、全リレー同時書き込み（ADR-004）
 - [x] 状態管理手法の選定 → Zustand（ADR-002）
@@ -233,8 +231,6 @@ NIP-28のkind一覧:
 
 ## Phase 5: E2Eテスト
 
-> 担当: `/vimrc-reading-e2e-tester`
-
 - [x] Playwrightのセットアップ
 - [x] モックリレーサーバーの構築
 - [x] MUST要件のE2Eテスト
@@ -276,8 +272,6 @@ Phase 6（リリース準備）
 
 ## 備考
 
-- 各Phaseのタスクは `/vimrc-reading-implementer` がTDD（Red→Green→Refactor）で実装する
-- 設計判断が必要な場面では `/vimrc-reading-architecture` に相談する
-- 要件の追加・変更は `/vimrc-reading-requirements` で議論する
-- ユニットテストは実装と同時にTDDで書く。E2Eテストは Phase 5 で `/vimrc-reading-e2e-tester` が書く
-- マイクロコミット（Conventional Commits）で進める
+- TDD（Red→Green→Refactor）���実装する
+- ユニットテス���は実装と同時に書く。E2Eテストは Phase 5 で書く
+- マイクロ���ミット（Conventional Commits）で進める

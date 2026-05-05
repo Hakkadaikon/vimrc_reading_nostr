@@ -76,14 +76,6 @@
 - highlight.js: Vimscript含む広い言語サポート。vimrc読書会ではVim設定ファイルのコード共有が頻出
 - react-syntax-highlighter: GitHubコードプレビュー用。React統合でPrism + oneDarkテーマを使用
 
-## リレーサーバー構成
-
-```
-環境変数: VITE_RELAY_URLS
-デフォルト: wss://yabu.me,wss://relay-jp.nostr.wirednet.jp
-（本番では独自リレー2-3台に置き換え）
-```
-
 ## メッセージ管理アーキテクチャ
 
 ```
@@ -141,9 +133,3 @@ vimrc_reading_nostr/src/
   - メイン: メッセージ一覧（時系列、下が最新、行番号ガター風タイムスタンプ）
   - フッター: 投稿フォーム（Slackライク送信アイコン、自動高さ調整）、未ログイン時はログイン促進バー
 
-## 認証方式
-
-- NIP-07: `window.nostr` API 経由
-- アプリ内生成: nostr-tools の `generateSecretKey()` → localStorage
-- nsec入力: bech32デコード → localStorage
-- ログアウト: localStorageから鍵を削除
