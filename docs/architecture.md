@@ -100,10 +100,11 @@ vimrc_reading_nostr/src/
 ├── components/          # UIコンポーネント
 │   ├── chat/            # チャット関連（MessageList, MessageItem, MessageForm, ParticipantList）
 │   ├── auth/            # 認証関連（LoginDialog, UserInfo）
-│   └── common/          # 共通UI（ConnectionStatus）
+│   └── common/          # 共通UI（ConnectionStatus, LogoutConfirmDialog）
 ├── hooks/               # カスタムフック（useRelayPool: シングルトンリレープール管理）
 ├── lib/                 # ユーティリティ・ビジネスロジック
 │   ├── github.ts        # GitHubファイルリンク解析・コードプレビュー
+│   ├── image-upload.ts  # 画像アップロード（NIP-96/NIP-98対応）
 │   ├── markdown.ts      # Markdownレンダリング（marked + DOMPurify）
 │   └── nostr/           # Nostrプロトコル関連
 │       ├── channel.ts       # NIP-28チャンネルフィルタ生成
