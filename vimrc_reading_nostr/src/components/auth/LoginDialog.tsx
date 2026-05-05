@@ -164,6 +164,17 @@ export function LoginDialog({ onClose, onPublishEvent }: LoginDialogProps) {
 								type="url"
 								value={pictureUrl}
 								onChange={(e) => setPictureUrl(e.target.value)}
+								onPaste={(e) => {
+									const items = e.clipboardData?.items;
+									if (!items) return;
+									for (const item of items) {
+										if (item.type.startsWith("image/")) {
+											e.preventDefault();
+											handlePasteImage();
+											return;
+										}
+									}
+								}}
 								placeholder="https://example.com/avatar.png"
 								className="flex-1 rounded border border-[var(--line)] bg-[var(--bg-pane)] px-3 py-2 text-sm text-[var(--fg)] outline-none placeholder:text-[var(--fg-mute)] focus:border-[var(--accent)]"
 							/>
