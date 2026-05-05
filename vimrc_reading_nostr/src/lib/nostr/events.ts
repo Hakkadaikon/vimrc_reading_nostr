@@ -51,4 +51,3 @@ export function getETag(tags: string[][]): string | null {
 export function getETags(tags: string[][]): string[] {
 	return tags.filter((t) => t[0] === "e").map((t) => t[1]);
 }
-
