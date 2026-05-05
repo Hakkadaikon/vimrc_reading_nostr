@@ -72,6 +72,7 @@ pnpm dev
 | [docs/architecture.md](docs/architecture.md) | アーキテクチャ設計書。技術スタック、ADR（設計判断記録）、UI/UX方針、認証方式、リレー構成 |
 | [docs/TODO.md](docs/TODO.md) | 実装計画。Phase 0〜6のタスク一覧と進捗状況 |
 | [docs/build-and-deploy.md](docs/build-and-deploy.md) | ビルド・デプロイ手順。Cloudflare Workers への配備方法 |
+| [docs/nip.md](docs/nip.md) | 対応NIP一覧。NIPごとの利用シーンとkindイベント対応表 |
 
 ## ライセンス
 
