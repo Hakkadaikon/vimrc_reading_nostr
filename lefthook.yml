@@ -1,0 +1,10 @@
+pre-commit:
+  parallel: true
+  jobs:
+    - name: biome lint
+      root: "vimrc_reading_nostr/"
+      run: pnpm biome lint --staged --no-errors-on-unmatched --error-on-warnings
+
+    - name: biome format
+      root: "vimrc_reading_nostr/"
+      run: pnpm biome format --staged --no-errors-on-unmatched
