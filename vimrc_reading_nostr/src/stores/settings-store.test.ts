@@ -2,6 +2,7 @@
  * @vitest-environment jsdom
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { DEFAULT_IMAGE_UPLOAD_URL } from "#/lib/image-upload";
 import { SETTINGS_STORAGE_KEY, useSettingsStore } from "./settings-store";
 
 const mockStorage = new Map<string, string>();
@@ -18,7 +19,10 @@ describe("useSettingsStore", () => {
 	beforeEach(() => {
 		mockStorage.clear();
 		vi.clearAllMocks();
-		useSettingsStore.setState({ githubPreviewEnabled: true });
+		useSettingsStore.setState({
+			githubPreviewEnabled: true,
+			imageUploadUrl: DEFAULT_IMAGE_UPLOAD_URL,
+		});
 	});
 
 	it("初期状態ではGitHubプレビューが有効", () => {
@@ -43,5 +47,35 @@ describe("useSettingsStore", () => {
 		);
 		useSettingsStore.getState().loadSettings();
 		expect(useSettingsStore.getState().githubPreviewEnabled).toBe(false);
+	});
+
+	it("初期状態で画像アップロードURLがデフォルト値", () => {
+		expect(useSettingsStore.getState().imageUploadUrl).toBe(
+			DEFAULT_IMAGE_UPLOAD_URL,
+		);
+	});
+
+	it("画像アップロードURLを変更できる", () => {
+		useSettingsStore.getState().setImageUploadUrl("https://example.com/upload");
+		expect(useSettingsStore.getState().imageUploadUrl).toBe(
+			"https://example.com/upload",
+		);
+	});
+
+	it("画像アップロードURLがlocalStorageに保存される", () => {
+		useSettingsStore.getState().setImageUploadUrl("https://example.com/upload");
+		const stored = JSON.parse(mockStorage.get(SETTINGS_STORAGE_KEY) ?? "{}");
+		expect(stored.imageUploadUrl).toBe("https://example.com/upload");
+	});
+
+	it("localStorageから画像アップロードURLを復元できる", () => {
+		mockStorage.set(
+			SETTINGS_STORAGE_KEY,
+			JSON.stringify({ imageUploadUrl: "https://custom.host/upload" }),
+		);
+		useSettingsStore.getState().loadSettings();
+		expect(useSettingsStore.getState().imageUploadUrl).toBe(
+			"https://custom.host/upload",
+		);
 	});
 });
