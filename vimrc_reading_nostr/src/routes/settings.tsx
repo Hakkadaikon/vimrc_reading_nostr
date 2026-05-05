@@ -3,6 +3,7 @@ import { Home, LogIn, LogOut } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { UserInfo } from "#/components/auth/UserInfo";
 import { ConnectionStatus } from "#/components/common/ConnectionStatus";
+import { LogoutConfirmDialog } from "#/components/common/LogoutConfirmDialog";
 import {
 	clearProfileCache,
 	getCacheEntryCount,
@@ -38,10 +39,14 @@ function SettingsPage() {
 	}, []);
 
 	const isLoggedIn = useAuthStore((s) => s.publicKey !== null);
+	const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
 	return (
 		<div className="flex h-dvh flex-col bg-[var(--bg)]">
-			<SettingsHeader isLoggedIn={isLoggedIn} />
+			<SettingsHeader
+				isLoggedIn={isLoggedIn}
+				onLogout={() => setShowLogoutConfirm(true)}
+			/>
 			<main className="flex-1 overflow-y-auto px-4 py-8">
 				<div className="mx-auto max-w-2xl">
 					<section className="rounded-lg border border-[var(--line)] bg-[var(--bg-elev)] p-6">
@@ -139,11 +144,26 @@ function SettingsPage() {
 					</section>
 				</div>
 			</main>
+			{showLogoutConfirm && (
+				<LogoutConfirmDialog
+					onConfirm={() => {
+						useAuthStore.getState().logout();
+						setShowLogoutConfirm(false);
+					}}
+					onCancel={() => setShowLogoutConfirm(false)}
+				/>
+			)}
 		</div>
 	);
 }
 
-function SettingsHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
+function SettingsHeader({
+	isLoggedIn,
+	onLogout,
+}: {
+	isLoggedIn: boolean;
+	onLogout: () => void;
+}) {
 	return (
 		<div className="relative z-50 flex items-center justify-between border-b border-[var(--line)] bg-[var(--bg-pane)] px-3 py-2 md:px-5 md:py-3">
 			<div className="flex items-center gap-2 md:gap-4">
@@ -168,7 +188,7 @@ function SettingsHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
 				{isLoggedIn ? (
 					<button
 						type="button"
-						onClick={() => useAuthStore.getState().logout()}
+						onClick={onLogout}
 						className="rounded p-2 text-[var(--fg-dim)] hover:bg-[var(--bg-elev-2)]"
 						title="ログアウト"
 					>

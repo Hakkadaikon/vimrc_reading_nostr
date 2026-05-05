@@ -17,6 +17,7 @@ import { MessageForm } from "#/components/chat/MessageForm";
 import { MessageList } from "#/components/chat/MessageList";
 import { ParticipantList } from "#/components/chat/ParticipantList";
 import { ConnectionStatus } from "#/components/common/ConnectionStatus";
+import { LogoutConfirmDialog } from "#/components/common/LogoutConfirmDialog";
 import { useRelayPool } from "#/hooks/useRelayPool";
 import { CHANNEL_ID, createChannelMessageFilter } from "#/lib/nostr/channel";
 import {
@@ -55,6 +56,7 @@ function ChatPage() {
 	const addReaction = useReactionStore((s) => s.addReaction);
 	const messages = useMessageStore((s) => s.messages);
 	const [showLogin, setShowLogin] = useState(false);
+	const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 	const [highlightedEventId, setHighlightedEventId] = useState<
 		string | undefined
 	>();
@@ -327,6 +329,7 @@ function ChatPage() {
 		[],
 	);
 	const openLogin = useCallback(() => setShowLogin(true), []);
+	const openLogoutConfirm = useCallback(() => setShowLogoutConfirm(true), []);
 
 	const signAndPublish = useCallback(
 		async (template: ReturnType<typeof createChannelMessageEvent>) => {
@@ -394,6 +397,7 @@ function ChatPage() {
 				isLoggedIn={isLoggedIn}
 				onToggleParticipants={toggleParticipants}
 				onShowLogin={openLogin}
+				onLogout={openLogoutConfirm}
 			/>
 
 			{isInitialLoading ? (
@@ -475,6 +479,15 @@ function ChatPage() {
 					onPublishEvent={publish}
 				/>
 			)}
+			{showLogoutConfirm && (
+				<LogoutConfirmDialog
+					onConfirm={() => {
+						useAuthStore.getState().logout();
+						setShowLogoutConfirm(false);
+					}}
+					onCancel={() => setShowLogoutConfirm(false)}
+				/>
+			)}
 		</main>
 	);
 }
@@ -483,12 +496,14 @@ type ChatHeaderProps = {
 	isLoggedIn: boolean;
 	onToggleParticipants: () => void;
 	onShowLogin: () => void;
+	onLogout: () => void;
 };
 
 const ChatHeader = memo(function ChatHeader({
 	isLoggedIn,
 	onToggleParticipants,
 	onShowLogin,
+	onLogout,
 }: ChatHeaderProps) {
 	return (
 		<div className="relative z-50 flex items-center justify-between border-b border-[var(--line)] bg-[var(--bg-pane)] px-3 py-2 md:px-5 md:py-3">
@@ -522,7 +537,7 @@ const ChatHeader = memo(function ChatHeader({
 				{isLoggedIn ? (
 					<button
 						type="button"
-						onClick={() => useAuthStore.getState().logout()}
+						onClick={onLogout}
 						className="rounded p-2 text-[var(--fg-dim)] hover:bg-[var(--bg-elev-2)]"
 						title="ログアウト"
 					>
