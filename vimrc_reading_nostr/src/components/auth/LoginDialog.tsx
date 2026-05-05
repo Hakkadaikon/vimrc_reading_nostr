@@ -44,10 +44,14 @@ export function LoginDialog({ onClose, onPublishEvent }: LoginDialogProps) {
 
 	const handleUploadFile = async (file: File) => {
 		setError("");
+		if (!secretKeyRef.current) {
+			setError("秘密鍵がありません");
+			return;
+		}
 		setUploading(true);
 		try {
 			const uploadUrl = useSettingsStore.getState().imageUploadUrl;
-			const url = await uploadImage(file, uploadUrl);
+			const url = await uploadImage(file, uploadUrl, secretKeyRef.current);
 			setPictureUrl(url);
 		} catch {
 			setError("画像のアップロードに失敗しました");
