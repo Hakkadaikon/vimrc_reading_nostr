@@ -32,7 +32,7 @@ describe("useSettingsStore", () => {
 
 	it("設定変更がlocalStorageに保存される", () => {
 		useSettingsStore.getState().setGithubPreviewEnabled(false);
-		const stored = JSON.parse(mockStorage.get(SETTINGS_STORAGE_KEY)!);
+		const stored = JSON.parse(mockStorage.get(SETTINGS_STORAGE_KEY) ?? "{}");
 		expect(stored.githubPreviewEnabled).toBe(false);
 	});
 
