@@ -31,7 +31,7 @@ describe("decodeNevent", () => {
 
 describe("shortenNpub", () => {
 	it("npubを短縮表示する", () => {
-		const npub = "npub1" + "a".repeat(58);
+		const npub = `npub1${"a".repeat(58)}`;
 		const shortened = shortenNpub(npub);
 		expect(shortened).toMatch(/^npub1.+\.\.\..+$/);
 		expect(shortened.length).toBeLessThan(npub.length);
