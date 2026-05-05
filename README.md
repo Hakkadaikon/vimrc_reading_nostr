@@ -70,6 +70,7 @@ pnpm dev
 | [docs/specs.md](docs/specs.md) | 要件定義。MUST/SHOULD/MAYの機能一覧と実装済み追加機能 |
 | [docs/architecture.md](docs/architecture.md) | アーキテクチャ設計書。技術スタック、ADR（設計判断記録）、UI/UX方針、認証方式、リレー構成 |
 | [docs/TODO.md](docs/TODO.md) | 実装計画。Phase 0〜6のタスク一覧と進捗状況 |
+| [docs/build-and-deploy.md](docs/build-and-deploy.md) | ビルド・デプロイ手順。Cloudflare Workers への配備方法 |
 
 ## ライセンス
 
