@@ -8,13 +8,19 @@ describe("image-upload", () => {
 		);
 	});
 
-	it("画像をアップロードしてURLを返す", async () => {
+	it("NIP-94形式のレスポンスからURLを取得できる", async () => {
 		const mockResponse = {
 			ok: true,
 			json: () =>
 				Promise.resolve({
 					status: "success",
-					data: [{ url: "https://image.nostr.build/uploaded.png" }],
+					nip94_event: {
+						tags: [
+							["url", "https://image.nostr.build/uploaded.png"],
+							["m", "image/png"],
+							["x", "abc123"],
+						],
+					},
 				}),
 		};
 		vi.stubGlobal("fetch", vi.fn().mockResolvedValue(mockResponse));
@@ -28,6 +34,42 @@ describe("image-upload", () => {
 			expect.objectContaining({ method: "POST" }),
 		);
 
+		vi.unstubAllGlobals();
+	});
+
+	it("data配列形式のレスポンスからURLを取得できる", async () => {
+		const mockResponse = {
+			ok: true,
+			json: () =>
+				Promise.resolve({
+					status: "success",
+					data: [{ url: "https://image.nostr.build/uploaded2.png" }],
+				}),
+		};
+		vi.stubGlobal("fetch", vi.fn().mockResolvedValue(mockResponse));
+
+		const file = new File(["dummy"], "test.png", { type: "image/png" });
+		const url = await uploadImage(file, DEFAULT_IMAGE_UPLOAD_URL);
+
+		expect(url).toBe("https://image.nostr.build/uploaded2.png");
+		vi.unstubAllGlobals();
+	});
+
+	it("dataリンク形式のレスポンスからURLを取得できる", async () => {
+		const mockResponse = {
+			ok: true,
+			json: () =>
+				Promise.resolve({
+					success: true,
+					data: { link: "https://image.nostr.build/uploaded3.png" },
+				}),
+		};
+		vi.stubGlobal("fetch", vi.fn().mockResolvedValue(mockResponse));
+
+		const file = new File(["dummy"], "test.png", { type: "image/png" });
+		const url = await uploadImage(file, DEFAULT_IMAGE_UPLOAD_URL);
+
+		expect(url).toBe("https://image.nostr.build/uploaded3.png");
 		vi.unstubAllGlobals();
 	});
 
@@ -53,7 +95,6 @@ describe("image-upload", () => {
 			json: () =>
 				Promise.resolve({
 					status: "success",
-					data: [],
 				}),
 		};
 		vi.stubGlobal("fetch", vi.fn().mockResolvedValue(mockResponse));
