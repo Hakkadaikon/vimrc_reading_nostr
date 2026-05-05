@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-	type GitHubFileLink,
 	extractGitHubFileLinks,
 	getLanguageFromPath,
 	parseGitHubFileUrl,
@@ -12,19 +11,19 @@ describe("parseGitHubFileUrl", () => {
 			"https://github.com/owner/repo/blob/main/path/to/file.vim",
 		);
 		expect(result).not.toBeNull();
-		expect(result!.owner).toBe("owner");
-		expect(result!.repo).toBe("repo");
-		expect(result!.branch).toBe("main");
-		expect(result!.filePath).toBe("path/to/file.vim");
-		expect(result!.startLine).toBeUndefined();
-		expect(result!.endLine).toBeUndefined();
-		expect(result!.url).toBe(
+		expect(result?.owner).toBe("owner");
+		expect(result?.repo).toBe("repo");
+		expect(result?.branch).toBe("main");
+		expect(result?.filePath).toBe("path/to/file.vim");
+		expect(result?.startLine).toBeUndefined();
+		expect(result?.endLine).toBeUndefined();
+		expect(result?.url).toBe(
 			"https://github.com/owner/repo/blob/main/path/to/file.vim",
 		);
-		expect(result!.rawUrl).toBe(
+		expect(result?.rawUrl).toBe(
 			"https://api.github.com/repos/owner/repo/contents/path/to/file.vim?ref=main",
 		);
-		expect(result!.language).toBe("vim");
+		expect(result?.language).toBe("vim");
 	});
 
 	it("行番号付きURLをパースできる", () => {
@@ -32,9 +31,9 @@ describe("parseGitHubFileUrl", () => {
 			"https://github.com/owner/repo/blob/main/path/to/file.vim#L5",
 		);
 		expect(result).not.toBeNull();
-		expect(result!.startLine).toBe(5);
-		expect(result!.endLine).toBeUndefined();
-		expect(result!.filePath).toBe("path/to/file.vim");
+		expect(result?.startLine).toBe(5);
+		expect(result?.endLine).toBeUndefined();
+		expect(result?.filePath).toBe("path/to/file.vim");
 	});
 
 	it("行範囲付きURLをパースできる", () => {
@@ -42,8 +41,8 @@ describe("parseGitHubFileUrl", () => {
 			"https://github.com/owner/repo/blob/main/path/to/file.vim#L5-L13",
 		);
 		expect(result).not.toBeNull();
-		expect(result!.startLine).toBe(5);
-		expect(result!.endLine).toBe(13);
+		expect(result?.startLine).toBe(5);
+		expect(result?.endLine).toBe(13);
 	});
 
 	it("深いパスのファイルをパースできる", () => {
@@ -51,11 +50,11 @@ describe("parseGitHubFileUrl", () => {
 			"https://github.com/vim/vim/blob/master/src/eval/typval.c",
 		);
 		expect(result).not.toBeNull();
-		expect(result!.owner).toBe("vim");
-		expect(result!.repo).toBe("vim");
-		expect(result!.branch).toBe("master");
-		expect(result!.filePath).toBe("src/eval/typval.c");
-		expect(result!.language).toBe("c");
+		expect(result?.owner).toBe("vim");
+		expect(result?.repo).toBe("vim");
+		expect(result?.branch).toBe("master");
+		expect(result?.filePath).toBe("src/eval/typval.c");
+		expect(result?.language).toBe("c");
 	});
 
 	it("ブランチ名にスラッシュが含まれるURLをパースできる", () => {
@@ -64,7 +63,7 @@ describe("parseGitHubFileUrl", () => {
 		);
 		// ブランチ名の解析は最初のパス要素をブランチとして扱う
 		expect(result).not.toBeNull();
-		expect(result!.branch).toBe("feature");
+		expect(result?.branch).toBe("feature");
 	});
 
 	it("無効なURLに対してnullを返す", () => {
@@ -81,8 +80,8 @@ describe("parseGitHubFileUrl", () => {
 			"https://github.com/owner/repo/blob/main/.vimrc",
 		);
 		expect(result).not.toBeNull();
-		expect(result!.filePath).toBe(".vimrc");
-		expect(result!.branch).toBe("main");
+		expect(result?.filePath).toBe(".vimrc");
+		expect(result?.branch).toBe("main");
 	});
 });
 
@@ -111,8 +110,7 @@ describe("extractGitHubFileLinks", () => {
 	});
 
 	it("GitHubファイルURL以外のURLは抽出しない", () => {
-		const text =
-			"https://example.com と https://github.com/owner/repo は無視";
+		const text = "https://example.com と https://github.com/owner/repo は無視";
 		const links = extractGitHubFileLinks(text);
 		expect(links).toHaveLength(0);
 	});
