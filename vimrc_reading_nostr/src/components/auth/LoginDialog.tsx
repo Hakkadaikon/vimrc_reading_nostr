@@ -1,6 +1,7 @@
 import type { Event } from "nostr-tools/core";
 import { finalizeEvent, getPublicKey } from "nostr-tools/pure";
 import { useRef, useState } from "react";
+import { uploadImage } from "#/lib/image-upload";
 import { createMetadataEvent } from "#/lib/nostr/events";
 import {
 	generateKeyPair,
@@ -10,6 +11,7 @@ import {
 import { getNip07Provider } from "#/lib/nostr/nip07";
 import { useAuthStore } from "#/stores/auth-store";
 import { useProfileStore } from "#/stores/profile-store";
+import { useSettingsStore } from "#/stores/settings-store";
 
 type LoginDialogProps = {
 	onClose: () => void;
@@ -26,6 +28,8 @@ export function LoginDialog({ onClose, onPublishEvent }: LoginDialogProps) {
 	const [generatedNsec, setGeneratedNsec] = useState("");
 	const secretKeyRef = useRef<Uint8Array | null>(null);
 	const [nameInput, setNameInput] = useState("");
+	const [pictureUrl, setPictureUrl] = useState("");
+	const [uploading, setUploading] = useState(false);
 	const [showNsec, setShowNsec] = useState(false);
 	const [copied, setCopied] = useState(false);
 	const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -38,16 +42,53 @@ export function LoginDialog({ onClose, onPublishEvent }: LoginDialogProps) {
 		loginWithKeys(secretKey, publicKey);
 	};
 
+	const handlePasteImage = async () => {
+		setError("");
+		try {
+			const clipboardItems = await navigator.clipboard.read();
+			let imageFile: File | null = null;
+			for (const item of clipboardItems) {
+				const imageType = item.types.find((t) => t.startsWith("image/"));
+				if (imageType) {
+					const blob = await item.getType(imageType);
+					imageFile = new File([blob], "clipboard.png", { type: imageType });
+					break;
+				}
+			}
+			if (!imageFile) {
+				setError("クリップボードに画像がありません");
+				return;
+			}
+			setUploading(true);
+			const uploadUrl = useSettingsStore.getState().imageUploadUrl;
+			const url = await uploadImage(imageFile, uploadUrl);
+			setPictureUrl(url);
+		} catch {
+			setError("画像のアップロードに失敗しました");
+		} finally {
+			setUploading(false);
+		}
+	};
+
 	const handleConfirmGenerated = async () => {
 		const trimmedName = nameInput.trim();
 		if (trimmedName && secretKeyRef.current && onPublishEvent) {
 			try {
-				const template = createMetadataEvent({ name: trimmedName });
+				const metadata: { name: string; picture?: string } = {
+					name: trimmedName,
+				};
+				if (pictureUrl.trim()) {
+					metadata.picture = pictureUrl.trim();
+				}
+				const template = createMetadataEvent(metadata);
 				const signedEvent = finalizeEvent(template, secretKeyRef.current);
 				await onPublishEvent(signedEvent);
 				const pubkey = useAuthStore.getState().publicKey;
 				if (pubkey) {
-					setProfile(pubkey, { name: trimmedName });
+					setProfile(pubkey, {
+						name: trimmedName,
+						picture: metadata.picture,
+					});
 				}
 			} catch {
 				setError("プロフィールの保存に失敗しました");
@@ -109,6 +150,42 @@ export function LoginDialog({ onClose, onPublishEvent }: LoginDialogProps) {
 							placeholder="名前を入力"
 							className="w-full rounded border border-[var(--line)] bg-[var(--bg-pane)] px-3 py-2 text-sm text-[var(--fg)] outline-none placeholder:text-[var(--fg-mute)] focus:border-[var(--accent)]"
 						/>
+					</div>
+					<div className="mb-4">
+						<label
+							htmlFor="picture-input"
+							className="mb-1 block text-sm font-semibold text-[var(--fg)]"
+						>
+							アイコンURL（任意）
+						</label>
+						<div className="flex gap-2">
+							<input
+								id="picture-input"
+								type="url"
+								value={pictureUrl}
+								onChange={(e) => setPictureUrl(e.target.value)}
+								placeholder="https://example.com/avatar.png"
+								className="flex-1 rounded border border-[var(--line)] bg-[var(--bg-pane)] px-3 py-2 text-sm text-[var(--fg)] outline-none placeholder:text-[var(--fg-mute)] focus:border-[var(--accent)]"
+							/>
+							<button
+								type="button"
+								onClick={handlePasteImage}
+								disabled={uploading}
+								className="shrink-0 rounded bg-[var(--bg-elev-2)] px-3 py-2 text-xs text-[var(--fg-dim)] hover:bg-[var(--line)] disabled:opacity-50"
+							>
+								{uploading ? "送信中..." : "貼り付け"}
+							</button>
+						</div>
+						<p className="mt-1 text-xs text-[var(--fg-mute)]">
+							URLを直接入力するか、クリップボードの画像を貼り付けてアップロードできます
+						</p>
+						{pictureUrl && (
+							<img
+								src={pictureUrl}
+								alt="アイコンプレビュー"
+								className="mt-2 h-12 w-12 rounded-full border border-[var(--line)] object-cover"
+							/>
+						)}
 					</div>
 					<div className="mb-4 rounded-lg border border-[rgba(250,189,47,0.3)] bg-[rgba(250,189,47,0.06)] p-4 text-sm">
 						<p className="mb-2 font-semibold text-[var(--warn)]">

@@ -21,6 +21,8 @@ function SettingsPage() {
 	const setGithubPreviewEnabled = useSettingsStore(
 		(s) => s.setGithubPreviewEnabled,
 	);
+	const imageUploadUrl = useSettingsStore((s) => s.imageUploadUrl);
+	const setImageUploadUrl = useSettingsStore((s) => s.setImageUploadUrl);
 
 	const messageCount = useMessageStore((s) => s.messages.length);
 
@@ -112,6 +114,28 @@ function SettingsPage() {
 								className="h-5 w-5 rounded accent-[var(--accent)]"
 							/>
 						</label>
+					</section>
+
+					<section className="mt-6 rounded-lg border border-[var(--line)] bg-[var(--bg-elev)] p-6">
+						<h2 className="mb-4 text-lg font-semibold text-[var(--fg)]">
+							画像アップロード
+						</h2>
+						<label
+							htmlFor="image-upload-url"
+							className="mb-1 block text-sm font-medium text-[var(--fg)]"
+						>
+							アップロード先URL
+						</label>
+						<p className="mb-2 text-xs text-[var(--fg-dim)]">
+							アイコン設定時の画像アップロード先を指定します（nostr.build互換API）
+						</p>
+						<input
+							id="image-upload-url"
+							type="url"
+							value={imageUploadUrl}
+							onChange={(e) => setImageUploadUrl(e.target.value)}
+							className="w-full rounded border border-[var(--line)] bg-[var(--bg-pane)] px-3 py-2 text-sm text-[var(--fg)] outline-none placeholder:text-[var(--fg-mute)] focus:border-[var(--accent)]"
+						/>
 					</section>
 				</div>
 			</main>
