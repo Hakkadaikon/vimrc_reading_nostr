@@ -80,7 +80,7 @@ describe("useAuthStore", () => {
 			AUTH_STORAGE_KEY,
 			expect.any(String),
 		);
-		const stored = JSON.parse(mockStorage.get(AUTH_STORAGE_KEY)!);
+		const stored = JSON.parse(mockStorage.get(AUTH_STORAGE_KEY) ?? "{}");
 		expect(stored.publicKey).toBe(publicKey);
 		expect(stored.loginMethod).toBe("nip07");
 		expect(stored.secretKey).toBeUndefined();
@@ -90,7 +90,7 @@ describe("useAuthStore", () => {
 		const { secretKey, publicKey } = generateKeyPair();
 		useAuthStore.getState().loginWithKeys(secretKey, publicKey);
 
-		const stored = JSON.parse(mockStorage.get(AUTH_STORAGE_KEY)!);
+		const stored = JSON.parse(mockStorage.get(AUTH_STORAGE_KEY) ?? "{}");
 		expect(stored.publicKey).toBe(publicKey);
 		expect(stored.loginMethod).toBe("keys");
 		expect(stored.secretKey).toBeDefined();
