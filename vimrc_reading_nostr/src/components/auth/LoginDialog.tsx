@@ -25,6 +25,7 @@ export function LoginDialog({ onClose, onPublishEvent }: LoginDialogProps) {
 	const setProfile = useProfileStore((s) => s.setProfile);
 	const [nsecInput, setNsecInput] = useState("");
 	const [error, setError] = useState("");
+	const [nip07Loading, setNip07Loading] = useState(false);
 	const [generatedNsec, setGeneratedNsec] = useState("");
 	const secretKeyRef = useRef<Uint8Array | null>(null);
 	const [nameInput, setNameInput] = useState("");
@@ -112,12 +113,15 @@ export function LoginDialog({ onClose, onPublishEvent }: LoginDialogProps) {
 			);
 			return;
 		}
+		setNip07Loading(true);
 		try {
 			const pubkey = await provider.getPublicKey();
 			loginWithNip07(pubkey);
 			onClose();
 		} catch {
 			setError("拡張機能からの公開鍵取得に失敗しました");
+		} finally {
+			setNip07Loading(false);
 		}
 	};
 
@@ -274,15 +278,27 @@ export function LoginDialog({ onClose, onPublishEvent }: LoginDialogProps) {
 					<button
 						type="button"
 						onClick={handleNip07Login}
-						className="w-full rounded border border-[var(--line)] px-4 py-3 text-left text-sm transition hover:bg-[var(--bg-elev-2)]"
+						disabled={nip07Loading}
+						className="w-full rounded border border-[var(--line)] px-4 py-3 text-left text-sm transition hover:bg-[var(--bg-elev-2)] disabled:opacity-70"
 					>
-						<span className="font-semibold text-[var(--fg)]">
-							NIP-07 拡張機能でログイン
-						</span>
-						<br />
-						<span className="text-xs text-[var(--fg-mute)]">
-							nos2x等のブラウザ拡張を使用（推奨）
-						</span>
+						{nip07Loading ? (
+							<div className="flex items-center gap-2">
+								<div className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent" />
+								<span className="font-semibold text-[var(--fg)]">
+									接続中...
+								</span>
+							</div>
+						) : (
+							<>
+								<span className="font-semibold text-[var(--fg)]">
+									NIP-07 拡張機能でログイン
+								</span>
+								<br />
+								<span className="text-xs text-[var(--fg-mute)]">
+									nos2x等のブラウザ拡張を使用（推奨）
+								</span>
+							</>
+						)}
 					</button>
 
 					<button
