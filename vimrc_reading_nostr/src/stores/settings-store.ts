@@ -14,15 +14,12 @@ type SettingsState = Settings & {
 	loadSettings: () => void;
 };
 
-function getSettings(state: SettingsState): Settings {
-	return {
+function saveSettings(state: SettingsState): void {
+	if (typeof window === "undefined") return;
+	const settings: Settings = {
 		githubPreviewEnabled: state.githubPreviewEnabled,
 		imageUploadUrl: state.imageUploadUrl,
 	};
-}
-
-function saveSettings(settings: Settings): void {
-	if (typeof window === "undefined") return;
 	window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
 }
 
@@ -32,12 +29,12 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
 	setGithubPreviewEnabled: (enabled) => {
 		set({ githubPreviewEnabled: enabled });
-		saveSettings(getSettings({ ...get(), githubPreviewEnabled: enabled }));
+		saveSettings(get());
 	},
 
 	setImageUploadUrl: (url) => {
 		set({ imageUploadUrl: url });
-		saveSettings(getSettings({ ...get(), imageUploadUrl: url }));
+		saveSettings(get());
 	},
 
 	loadSettings: () => {
