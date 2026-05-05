@@ -272,6 +272,6 @@ Phase 6（リリース準備）
 
 ## 備考
 
-- TDD（Red→Green→Refactor）���実装する
-- ユニットテス���は実装と同時に書く。E2Eテストは Phase 5 で書く
-- マイクロ���ミット（Conventional Commits）で進める
+- TDD（Red→Green→Refactor）で実装する
+- ユニットテストは実装と同時に書く。E2Eテストは Phase 5 で書く
+- マイクロコミット（Conventional Commits）で進める

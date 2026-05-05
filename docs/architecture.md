@@ -107,7 +107,7 @@ vimrc_reading_nostr/src/
 │   ├── markdown.ts      # Markdownレンダリング（marked + DOMPurify）
 │   └── nostr/           # Nostrプロトコル関連
 │       ├── channel.ts       # NIP-28チャンネルフィルタ生成
-│       ├── events.ts        # イベントテンプレー��生成（kind:0,5,42）
+│       ├── events.ts        # イベントテンプレート生成（kind:0,5,42）
 │       ├── keys.ts          # 鍵ペア生成、nsecエンコード/デコード
 │       ├── nip07.ts         # NIP-07ブラウザ拡張連携
 │       ├── nip19.ts         # bech32エンコード（npub, nevent）
