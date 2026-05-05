@@ -74,9 +74,7 @@ export function MessageForm({ onSubmit, disabled }: MessageFormProps) {
 					type="submit"
 					disabled={!canSend}
 					className={`absolute right-2 rounded p-1 transition ${
-						isMultiline
-							? "bottom-2"
-							: "top-1/2 -translate-y-[calc(50%+3px)]"
+						isMultiline ? "bottom-2" : "top-1/2 -translate-y-[calc(50%+3px)]"
 					} ${
 						canSend
 							? "text-[var(--accent)] hover:bg-[var(--accent-soft)]"
