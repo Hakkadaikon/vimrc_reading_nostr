@@ -179,7 +179,15 @@ export function LoginDialog({ onClose, onPublishEvent }: LoginDialogProps) {
 						<p className="mt-1 text-xs text-[var(--fg-mute)]">
 							URLを直接入力するか、クリップボードの画像を貼り付けてアップロードできます
 						</p>
-						{pictureUrl && (
+						{uploading && (
+							<div className="mt-2 flex items-center gap-2">
+								<div className="h-12 w-12 animate-pulse rounded-full bg-[var(--line)]" />
+								<span className="text-xs text-[var(--fg-mute)]">
+									アップロード中...
+								</span>
+							</div>
+						)}
+						{!uploading && pictureUrl && (
 							<img
 								src={pictureUrl}
 								alt="アイコンプレビュー"
