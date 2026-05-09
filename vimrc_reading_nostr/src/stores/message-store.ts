@@ -10,7 +10,7 @@ export type NostrMessage = {
 	sig: string;
 };
 
-export const MESSAGE_STORAGE_KEY = "vimrc_reading_nostr_messages";
+const MESSAGE_STORAGE_KEY = "vimrc_reading_nostr_messages";
 export const PAGE_SIZE = 50;
 
 type MessageState = {

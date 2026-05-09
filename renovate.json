@@ -2,5 +2,18 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended"
+  ],
+  "customManagers": [
+    {
+      "customType": "jsonata",
+      "fileFormat": "json",
+      "managerFilePatterns": [
+        "**/knip.json"
+      ],
+      "matchStrings": [
+        "{ \"depName\": \"knip\", \"currentValue\": $substringBefore($substringAfter(`$schema`, \"knip@\"), \"/\") }"
+      ],
+      "datasourceTemplate": "npm"
+    }
   ]
 }
