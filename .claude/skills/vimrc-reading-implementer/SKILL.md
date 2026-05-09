@@ -40,7 +40,7 @@ t-wadaスタイルのTDD（Red → Green → Refactor）で実装する。
 
 1つのTODOにつき1サイクル:
 
-1. **Red**: テストを書く → `npm run test` で失敗を確認（失敗理由が期待通りか確認する）
+1. **Red**: テストを書く → `pnpm run test` で失敗を確認（失敗理由が期待通りか確認する）
 2. **Green**: テストを通す最小のコードを書く（仮実装でもいい。三角測量で一般化する）
 3. **Refactor**: テストが通ったまま構造を改善する（振る舞いは変えない）
 
@@ -51,8 +51,8 @@ t-wadaスタイルのTDD（Red → Green → Refactor）で実装する。
 
 ### 4. 1機能分のTDDサイクル完了後
 
-1. `npm run test` で全テスト通過を確認
-2. `npm run check` でlint/format確認（`npm run format` で自動修正可）
+1. `pnpm run test` で全テスト通過を確認
+2. `pnpm run check` でlint/format確認（`pnpm run format` で自動修正可）
 
 ## プロジェクト固有のルール
 

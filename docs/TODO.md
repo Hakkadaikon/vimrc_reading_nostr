@@ -249,7 +249,7 @@ NIP-28のkind一覧:
 - [x] デモ用ファイルの削除（`src/routes/about.tsx` 削除済み）
 - [x] 本番用リレーサーバーの設定（wss://yabu.me, wss://relay-jp.nostr.wirednet.jp）
 - [x] README.md の更新（セットアップ手順、使い方）
-- [x] ビルド確認（`npm run build` 成功）
+- [x] ビルド確認（`pnpm run build` 成功）
 - [x] デプロイ方法の決定と実施（Cloudflare Workers、wrangler deploy）
 
 ---

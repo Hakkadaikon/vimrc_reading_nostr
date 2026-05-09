@@ -29,7 +29,7 @@ E2Eでは「画面を通じた統合的な振る舞い」に集中する。
 
 Playwrightが未導入の場合:
 
-1. `npm install -D @playwright/test && npx playwright install --with-deps chromium`
+1. `pnpm add -D @playwright/test && pnpm exec playwright install --with-deps chromium`
 2. `playwright.config.ts` を作成（testDir: `./e2e`、Chromiumのみ、`package.json` の dev スクリプトに合わせたwebServer設定）
 3. `package.json` に `test:e2e`, `test:e2e:ui`, `test:e2e:debug` スクリプトを追加
 4. `.gitignore` に `test-results/`, `playwright-report/`, `blob-report/` を追加
@@ -67,8 +67,8 @@ Playwrightの自動待機を活用する。`waitForTimeout` は使わない。
 
 1. テスト計画を提示する（対象機能、シナリオ一覧、specs.mdとの対応、モック要否）
 2. テストを書く（1ファイル = 1機能領域、1test = 1シナリオ、記述名は日本語）
-3. `npm run test:e2e` で実行。失敗がアプリのバグなら `/vimrc-reading-implementer` へ報告
-4. `npm run check` でlint/format確認
+3. `pnpm run test:e2e` で実行。失敗がアプリのバグなら `/vimrc-reading-implementer` へ報告
+4. `pnpm run check` でlint/format確認
 
 設計が未決定の場合は `/vimrc-reading-architecture` へ案内する。
 
