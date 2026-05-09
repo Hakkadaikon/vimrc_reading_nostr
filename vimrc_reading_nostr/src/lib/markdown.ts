@@ -1,16 +1,19 @@
 import DOMPurify from "dompurify";
 import hljs from "highlight.js";
-import { marked } from "marked";
+import { marked, type Renderer } from "marked";
 
-marked.setOptions({
-	breaks: true,
-	highlight(code: string, lang: string) {
-		if (lang && hljs.getLanguage(lang)) {
-			return hljs.highlight(code, { language: lang }).value;
-		}
-		return hljs.highlightAuto(code).value;
+const renderer: Partial<Renderer> = {
+	code({ text, lang }: { text: string; lang?: string }) {
+		const language = lang && hljs.getLanguage(lang) ? lang : undefined;
+		const highlighted = language
+			? hljs.highlight(text, { language }).value
+			: hljs.highlightAuto(text).value;
+		return `<pre><code class="hljs${language ? ` language-${language}` : ""}">${highlighted}</code></pre>`;
 	},
-});
+};
+
+marked.setOptions({ breaks: true });
+marked.use({ renderer });
 
 function escapeHtml(text: string): string {
 	return text
