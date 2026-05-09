@@ -1,6 +1,6 @@
 import DOMPurify from "dompurify";
 import hljs from "highlight.js";
-import { type Renderer, marked } from "marked";
+import { marked, type Renderer } from "marked";
 
 const renderer: Partial<Renderer> = {
 	code({ text, lang }: { text: string; lang?: string }) {
