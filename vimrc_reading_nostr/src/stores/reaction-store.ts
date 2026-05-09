@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export type Reaction = {
+type Reaction = {
 	id: string;
 	pubkey: string;
 	content: string;
