@@ -5,7 +5,7 @@ import type { ChannelMetadata } from "#/stores/channel-store";
 // vimrc読書会の固定チャンネルID（NIP-28 kind:40 イベントID）
 export const CHANNEL_ID =
 	import.meta.env.VITE_CHANNEL_ID ||
-	"4127d704015b030339a6955af2bb1b4e63f0c0b1c3c12478d1db685b0d781486";
+	"f076302c4519068fcf47e4e728bcdddb769766e4cceadc420d1f76c45d4ba5f7";
 
 type MessageFilterOptions = {
 	limit?: number;
