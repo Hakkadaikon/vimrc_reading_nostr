@@ -118,9 +118,10 @@ describe("localStorage キャッシュ", () => {
 		expect(useMessageStore.getState().isInitialLoading).toBe(false);
 	});
 
-	it("localStorageが空の場合loadLatestPageは何もしない", () => {
+	it("localStorageが空の場合loadLatestPageはメッセージを追加せずisInitialLoadingをfalseにする", () => {
 		useMessageStore.getState().loadLatestPage();
 		expect(useMessageStore.getState().messages).toEqual([]);
+		expect(useMessageStore.getState().isInitialLoading).toBe(false);
 	});
 
 	it("localStorageのデータが壊れている場合loadLatestPageは何もしない", () => {
