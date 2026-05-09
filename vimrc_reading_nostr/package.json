@@ -1,6 +1,7 @@
 {
   "name": "vimrc_reading_nostr",
   "private": true,
+  "packageManager": "pnpm@10.17.0",
   "type": "module",
   "imports": {
     "#/*": "./src/*"
