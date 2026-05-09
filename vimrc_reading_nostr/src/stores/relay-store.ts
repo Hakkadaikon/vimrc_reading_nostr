@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export type RelayStatus = "connected" | "connecting" | "disconnected" | "error";
+type RelayStatus = "connected" | "connecting" | "disconnected" | "error";
 
 type RelayState = {
 	statuses: Record<string, RelayStatus>;
