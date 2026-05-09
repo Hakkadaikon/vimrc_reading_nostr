@@ -1,4 +1,6 @@
+import type { Event } from "nostr-tools/core";
 import type { Filter } from "nostr-tools/filter";
+import type { ChannelMetadata } from "#/stores/channel-store";
 
 // vimrc読書会の固定チャンネルID（NIP-28 kind:40 イベントID）
 export const CHANNEL_ID =
@@ -28,4 +30,25 @@ export function createChannelMessageFilter(
 		filter.until = options.until;
 	}
 	return filter;
+}
+
+export function createChannelMetadataFilters(): Filter[] {
+	return [
+		{ kinds: [40], ids: [CHANNEL_ID] },
+		{ kinds: [41], "#e": [CHANNEL_ID] },
+	];
+}
+
+export function parseChannelMetadata(event: Event): ChannelMetadata | null {
+	if (event.kind !== 40 && event.kind !== 41) return null;
+	try {
+		const parsed = JSON.parse(event.content) as Record<string, unknown>;
+		return {
+			name: typeof parsed.name === "string" ? parsed.name : undefined,
+			about: typeof parsed.about === "string" ? parsed.about : undefined,
+			picture: typeof parsed.picture === "string" ? parsed.picture : undefined,
+		};
+	} catch {
+		return null;
+	}
 }

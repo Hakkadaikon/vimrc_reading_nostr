@@ -19,7 +19,12 @@ import { ParticipantList } from "#/components/chat/ParticipantList";
 import { ConnectionStatus } from "#/components/common/ConnectionStatus";
 import { LogoutConfirmDialog } from "#/components/common/LogoutConfirmDialog";
 import { useRelayPool } from "#/hooks/useRelayPool";
-import { CHANNEL_ID, createChannelMessageFilter } from "#/lib/nostr/channel";
+import {
+	CHANNEL_ID,
+	createChannelMessageFilter,
+	createChannelMetadataFilters,
+	parseChannelMetadata,
+} from "#/lib/nostr/channel";
 import {
 	createChannelMessageEvent,
 	createDeleteEvent,
@@ -32,6 +37,7 @@ import { getTodayParticipants, getTodayRange } from "#/lib/nostr/participants";
 import { createReactionEvent } from "#/lib/nostr/reactions";
 import { resolveProfile } from "#/lib/nostr/relay-discovery";
 import { useAuthStore } from "#/stores/auth-store";
+import { useChannelStore } from "#/stores/channel-store";
 import type { NostrMessage } from "#/stores/message-store";
 import { PAGE_SIZE, useMessageStore } from "#/stores/message-store";
 import { useProfileStore } from "#/stores/profile-store";
@@ -53,6 +59,7 @@ function ChatPage() {
 	const setHasMore = useMessageStore((s) => s.setHasMore);
 	const setProfile = useProfileStore((s) => s.setProfile);
 	const markRequested = useProfileStore((s) => s.markRequested);
+	const setChannelMetadata = useChannelStore((s) => s.setMetadata);
 	const addReaction = useReactionStore((s) => s.addReaction);
 	const messages = useMessageStore((s) => s.messages);
 	const [showLogin, setShowLogin] = useState(false);
@@ -211,10 +218,21 @@ function ChatPage() {
 			}
 		});
 
+		const metadataUnsub = subscribe(
+			createChannelMetadataFilters(),
+			(event: Event) => {
+				const metadata = parseChannelMetadata(event);
+				if (metadata) {
+					setChannelMetadata(metadata, event.created_at);
+				}
+			},
+		);
+
 		return () => {
 			unsub();
 			reactionUnsub();
 			deleteUnsub();
+			metadataUnsub();
 			if (batchTimerRef.current) {
 				clearTimeout(batchTimerRef.current);
 				batchTimerRef.current = null;
@@ -229,6 +247,7 @@ function ChatPage() {
 		subscribe,
 		addReaction,
 		deleteMessage,
+		setChannelMetadata,
 		requestProfile,
 		enqueueBgEvent,
 		flushBgBuffer,
@@ -505,6 +524,7 @@ const ChatHeader = memo(function ChatHeader({
 	onShowLogin,
 	onLogout,
 }: ChatHeaderProps) {
+	const channelName = useChannelStore((s) => s.metadata.name);
 	return (
 		<div className="relative z-50 flex items-center justify-between border-b border-[var(--line)] bg-[var(--bg-pane)] px-3 py-2 md:px-5 md:py-3">
 			<div className="flex items-center gap-2 md:gap-4">
@@ -517,7 +537,7 @@ const ChatHeader = memo(function ChatHeader({
 					<Users className="h-5 w-5" />
 				</button>
 				<h1 className="text-base font-bold text-[var(--fg)] md:text-lg">
-					vimrc読書会
+					{channelName}
 				</h1>
 				<ConnectionStatus />
 			</div>
