@@ -10,7 +10,7 @@ export type NostrMessage = {
 	sig: string;
 };
 
-export const MESSAGE_STORAGE_KEY = "vimrc_reading_nostr_messages";
+const MESSAGE_STORAGE_KEY = "vimrc_reading_nostr_messages";
 export const PAGE_SIZE = 50;
 
 type MessageState = {
@@ -162,7 +162,10 @@ export const useMessageStore = create<MessageState>((set, get) => ({
 
 	loadLatestPage: () => {
 		const all = getAllFromStorage();
-		if (all.length === 0) return;
+		if (all.length === 0) {
+			set({ isInitialLoading: false });
+			return;
+		}
 		const latest = all.slice(-PAGE_SIZE);
 		const hasMore = all.length > PAGE_SIZE;
 		const newIds = new Set(latest.map((m) => m.id));
