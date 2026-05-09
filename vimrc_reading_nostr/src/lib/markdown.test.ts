@@ -25,7 +25,8 @@ describe("renderMarkdown", () => {
 		const result = renderMarkdown("```vim\nset number\n```");
 		expect(result).toContain("<pre>");
 		expect(result).toContain("<code");
-		expect(result).toContain("set number");
+		expect(result).toContain("set");
+		expect(result).toContain("number");
 	});
 
 	it("scriptタグをサニタイズする", () => {

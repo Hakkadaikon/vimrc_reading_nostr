@@ -1,15 +1,23 @@
 import { expect, test } from "./fixtures/test-helpers";
 
-// ヘッダーのログインボタン（フッターにも「ログイン」リンクがあるため.first()で特定）
+// ヘッダーのログインボタン（アイコンボタン、title="ログイン"）
 function headerLoginButton(page: import("@playwright/test").Page) {
 	return page.getByRole("button", { name: "ログイン" }).first();
 }
 
+// 初期ロードが完了するまで待つ（モックリレーからEOSEを受信して読み込み完了）
+async function waitForInitialLoad(page: import("@playwright/test").Page) {
+	await page.goto("/");
+	await page.waitForLoadState("domcontentloaded");
+	// 読み込み中スピナーが消えてコンテンツが表示されるまで待つ
+	await expect(
+		page.getByText("メッセージを読み込んでいます..."),
+	).not.toBeVisible({ timeout: 30000 });
+}
+
 // SSR hydration完了後にログインダイアログを開く
 async function openLoginDialog(page: import("@playwright/test").Page) {
-	await page.goto("/");
-	// DOMContentLoadedで十分。networkidleはWebSocket接続でtimeoutする
-	await page.waitForLoadState("domcontentloaded");
+	await waitForInitialLoad(page);
 	// hydration完了を待ってからクリック — リトライでhydration遅延に対応
 	await expect(async () => {
 		await headerLoginButton(page).click({ timeout: 2000 });
@@ -21,7 +29,7 @@ async function openLoginDialog(page: import("@playwright/test").Page) {
 
 test.describe("チャット画面", () => {
 	test("未ログイン状態でチャット画面が表示される", async ({ page }) => {
-		await page.goto("/");
+		await waitForInitialLoad(page);
 
 		await expect(page.getByText("vimrc読書会")).toBeVisible();
 		await expect(headerLoginButton(page)).toBeVisible();
@@ -33,12 +41,14 @@ test.describe("チャット画面", () => {
 	test("未ログイン状態ではメッセージ入力欄が表示されない", async ({
 		page,
 	}) => {
-		await page.goto("/");
-		await expect(page.getByRole("button", { name: "投稿" })).not.toBeVisible();
+		await waitForInitialLoad(page);
+		await expect(
+			page.getByPlaceholder("メッセージを入力... (Ctrl+Enterで送信)"),
+		).not.toBeVisible();
 	});
 
 	test("メッセージがないとき空メッセージが表示される", async ({ page }) => {
-		await page.goto("/");
+		await waitForInitialLoad(page);
 		await expect(page.getByText("メッセージはまだありません")).toBeVisible();
 	});
 });
@@ -61,11 +71,12 @@ test.describe("ログインダイアログ", () => {
 			page.getByText("秘密鍵を安全に保管してください"),
 		).toBeVisible();
 
-		// ダイアログ内のnsec表示を確認（DevToolsのcode要素を除外）
-		const nsecElement = page.locator("code").filter({ hasText: /^nsec1/ });
-		await expect(nsecElement).toBeVisible();
-		const nsecText = await nsecElement.textContent();
-		expect(nsecText?.trim()).toMatch(/^nsec1/);
+		// nsecはパスワード入力欄に格納されている。「表示」ボタンで可視化できる
+		await page.getByRole("button", { name: "表示" }).click();
+		const nsecInput = page.locator("input[type='text'][readonly]");
+		await expect(nsecInput).toBeVisible();
+		const nsecValue = await nsecInput.inputValue();
+		expect(nsecValue).toMatch(/^nsec1/);
 	});
 
 	test("鍵ペア生成後に「保管しました」を押すとログイン済みになる", async ({
@@ -75,9 +86,14 @@ test.describe("ログインダイアログ", () => {
 		await page.getByText("新しい鍵ペアを生成").click();
 		await page.getByRole("button", { name: "保管しました" }).click();
 
-		await expect(page.getByText("ログアウト")).toBeVisible({ timeout: 10000 });
-		await expect(page.getByPlaceholder("メッセージを入力...")).toBeVisible();
-		await expect(page.getByRole("button", { name: "投稿" })).toBeVisible();
+		// ログアウトボタンはアイコン（title="ログアウト"）
+		await expect(
+			page.getByRole("button", { name: "ログアウト" }),
+		).toBeVisible({ timeout: 10000 });
+		// メッセージ入力欄が表示される（Ctrl+Enterで送信）
+		await expect(
+			page.getByPlaceholder("メッセージを入力... (Ctrl+Enterで送信)"),
+		).toBeVisible();
 	});
 
 	test("ログアウトすると未ログイン状態に戻る", async ({ page }) => {
@@ -85,7 +101,14 @@ test.describe("ログインダイアログ", () => {
 		await page.getByText("新しい鍵ペアを生成").click();
 		await page.getByRole("button", { name: "保管しました" }).click();
 
-		await page.getByText("ログアウト").click();
+		// ログアウト確認ダイアログ経由（ヘッダーのアイコンボタン）
+		await page.getByRole("button", { name: "ログアウト" }).click();
+		// 確認ダイアログが表示される
+		await expect(page.getByText("ログアウト確認")).toBeVisible({
+			timeout: 5000,
+		});
+		// 確認ダイアログ内の「ログアウト」ボタンをクリック（赤いボタン）
+		await page.getByRole("button", { name: "ログアウト" }).last().click();
 
 		await expect(headerLoginButton(page)).toBeVisible();
 	});
