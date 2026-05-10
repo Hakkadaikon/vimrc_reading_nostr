@@ -73,13 +73,13 @@ importers:
         specifier: latest
         version: 0.6.0(vite@8.0.11(@types/node@24.12.3)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.8.4))
       '@testing-library/dom':
-        specifier: ^10.4.1
+        specifier: 10.4.1
         version: 10.4.1
       '@testing-library/react':
-        specifier: ^16.3.0
+        specifier: 16.3.2
         version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@types/node':
-        specifier: ^24.0.0
+        specifier: 24.12.3
         version: 24.12.3
       '@types/react':
         specifier: 19.2.14
@@ -88,16 +88,16 @@ importers:
         specifier: 19.2.3
         version: 19.2.3(@types/react@19.2.14)
       '@types/react-syntax-highlighter':
-        specifier: ^15.5.13
+        specifier: 15.5.13
         version: 15.5.13
       '@types/ws':
-        specifier: ^8.18.1
+        specifier: 8.18.1
         version: 8.18.1
       '@vitejs/plugin-react':
-        specifier: ^6.0.1
+        specifier: 6.0.1
         version: 6.0.1(vite@8.0.11(@types/node@24.12.3)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.8.4))
       jsdom:
-        specifier: ^29.0.0
+        specifier: 29.1.1
         version: 29.1.1(@noble/hashes@2.0.1)
       knip:
         specifier: 6.12.2
