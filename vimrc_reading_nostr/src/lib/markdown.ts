@@ -30,5 +30,5 @@ export function renderMarkdown(content: string): string {
 	if (typeof window !== "undefined" && typeof window.document !== "undefined") {
 		return DOMPurify.sanitize(html);
 	}
-	return html;
+	return html.replace(/<[^>]*>/g, "");
 }
