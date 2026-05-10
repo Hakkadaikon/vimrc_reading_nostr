@@ -96,6 +96,8 @@ export const useMessageStore = create<MessageState>((set, get) => ({
 	hasMore: true,
 
 	addMessage: (event) => {
+		const now = Math.floor(Date.now() / 1000);
+		if (event.created_at > now + 900) return;
 		set((state) => {
 			if (state.messageIds.has(event.id) || state.deletedIds.has(event.id)) {
 				return state;
@@ -110,11 +112,14 @@ export const useMessageStore = create<MessageState>((set, get) => ({
 	},
 
 	addMessages: (events) => {
+		const now = Math.floor(Date.now() / 1000);
+		const maxTime = now + 900;
 		set((state) => {
 			let messages = state.messages;
 			const newIds = new Set(state.messageIds);
 			let added = 0;
 			for (const event of events) {
+				if (event.created_at > maxTime) continue;
 				if (!newIds.has(event.id) && !state.deletedIds.has(event.id)) {
 					newIds.add(event.id);
 					messages = binaryInsert(messages, event);

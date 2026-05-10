@@ -116,6 +116,10 @@ export function LoginDialog({ onClose, onPublishEvent }: LoginDialogProps) {
 		setNip07Loading(true);
 		try {
 			const pubkey = await provider.getPublicKey();
+			if (!/^[0-9a-f]{64}$/.test(pubkey)) {
+				setError("無効な公開鍵フォーマットです");
+				return;
+			}
 			loginWithNip07(pubkey);
 			onClose();
 		} catch {
@@ -326,6 +330,7 @@ export function LoginDialog({ onClose, onPublishEvent }: LoginDialogProps) {
 							<input
 								id="nsec-input"
 								type="password"
+								autoComplete="off"
 								value={nsecInput}
 								onChange={(e) => setNsecInput(e.target.value)}
 								placeholder="nsec1..."
