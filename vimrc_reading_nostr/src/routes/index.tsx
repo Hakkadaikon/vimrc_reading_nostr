@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { LogIn, LogOut, Settings, Users, X } from "lucide-react";
 import type { Event } from "nostr-tools/core";
-import { finalizeEvent } from "nostr-tools/pure";
+import { finalizeEvent, verifyEvent } from "nostr-tools/pure";
 import {
 	memo,
 	type PointerEvent as ReactPointerEvent,
@@ -187,9 +187,11 @@ function ChatPage() {
 		const unsub = subscribe(
 			[filter],
 			(event: Event) => {
-				const msg = event as NostrMessage;
-				requestProfile(msg.pubkey);
-				enqueueBgEvent(msg);
+				try {
+					const msg = event as NostrMessage;
+					requestProfile(msg.pubkey);
+					enqueueBgEvent(msg);
+				} catch { /* ignore malformed event */ }
 			},
 			() => {
 				// EOSE: バッファを即フラッシュしてlocalStorageに保存
@@ -202,29 +204,38 @@ function ChatPage() {
 		);
 
 		const reactionUnsub = subscribe([{ kinds: [7] }], (event: Event) => {
-			const targetId = getETag(event.tags);
-			if (targetId) {
-				addReaction(targetId, {
-					id: event.id,
-					pubkey: event.pubkey,
-					content: event.content,
-				});
-			}
+			try {
+				const targetId = getETag(event.tags);
+				if (targetId) {
+					addReaction(targetId, {
+						id: event.id,
+						pubkey: event.pubkey,
+						content: event.content,
+					});
+				}
+			} catch { /* ignore malformed event */ }
 		});
 
 		const deleteUnsub = subscribe([{ kinds: [5] }], (event: Event) => {
-			for (const id of getETags(event.tags)) {
-				deleteMessage(id);
-			}
+			try {
+				for (const id of getETags(event.tags)) {
+					const msg = useMessageStore.getState().messages.find((m) => m.id === id);
+					if (msg && msg.pubkey === event.pubkey) {
+						deleteMessage(id);
+					}
+				}
+			} catch { /* ignore malformed event */ }
 		});
 
 		const metadataUnsub = subscribe(
 			createChannelMetadataFilters(),
 			(event: Event) => {
-				const metadata = parseChannelMetadata(event);
-				if (metadata) {
-					setChannelMetadata(metadata, event.created_at);
-				}
+				try {
+					const metadata = parseChannelMetadata(event);
+					if (metadata) {
+						setChannelMetadata(metadata, event.created_at);
+					}
+				} catch { /* ignore malformed event */ }
 			},
 		);
 
@@ -367,6 +378,7 @@ function ChatPage() {
 			} else {
 				return;
 			}
+			if (!verifyEvent(signedEvent)) return;
 			// Optimistic update: kind:42の投稿のみ即座にUIに反映
 			if (signedEvent.kind === 42) {
 				const msg = signedEvent as NostrMessage;
