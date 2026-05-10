@@ -23,7 +23,15 @@ export function parseRelayListEvent(tags: string[][]): string[] {
 			const marker = tag[2];
 			return !marker || marker === "read";
 		})
-		.map((tag) => tag[1]);
+		.map((tag) => tag[1])
+		.filter((url) => {
+			try {
+				const parsed = new URL(url);
+				return parsed.protocol === "ws:" || parsed.protocol === "wss:";
+			} catch {
+				return false;
+			}
+		});
 }
 
 /**
@@ -118,6 +126,7 @@ function fetchProfileViaPool(
 		const unsub = subscribeFn(
 			[{ kinds: [0], authors: [pubkey], limit: 1 }],
 			(event: Event) => {
+				if (event.pubkey !== pubkey) return;
 				const profile = parseProfileMetadata(event.content);
 				if (profile) {
 					result = profile;
