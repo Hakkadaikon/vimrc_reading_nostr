@@ -88,9 +88,11 @@ export function parseGitHubFileUrl(url: string): GitHubFileLink | null {
 		: undefined;
 	const endLine = endLineStr ? Number.parseInt(endLineStr, 10) : undefined;
 
-	if (startLine !== undefined && (startLine < 1 || startLine > 10000)) return null;
+	if (startLine !== undefined && (startLine < 1 || startLine > 10000))
+		return null;
 	if (endLine !== undefined && (endLine < 1 || endLine > 10000)) return null;
-	if (startLine !== undefined && endLine !== undefined && endLine < startLine) return null;
+	if (startLine !== undefined && endLine !== undefined && endLine < startLine)
+		return null;
 
 	const rawUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}?ref=${branch}`;
 	const language = getLanguageFromPath(filePath);

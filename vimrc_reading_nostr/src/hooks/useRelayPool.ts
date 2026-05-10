@@ -83,7 +83,11 @@ async function connectToRelay(url: string) {
 		const connection: RelayConnection = { relay, url };
 		const idx = connections.findIndex((c) => c.url === url);
 		if (idx >= 0) {
-			try { connections[idx].relay.close(); } catch { /* ignore */ }
+			try {
+				connections[idx].relay.close();
+			} catch {
+				/* ignore */
+			}
 			connections[idx] = connection;
 		} else {
 			connections.push(connection);

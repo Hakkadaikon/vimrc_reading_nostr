@@ -219,7 +219,9 @@ function ChatPage() {
 		const deleteUnsub = subscribe([{ kinds: [5] }], (event: Event) => {
 			try {
 				for (const id of getETags(event.tags)) {
-					const msg = useMessageStore.getState().messages.find((m) => m.id === id);
+					const msg = useMessageStore
+						.getState()
+						.messages.find((m) => m.id === id);
 					if (msg && msg.pubkey === event.pubkey) {
 						deleteMessage(id);
 					}
