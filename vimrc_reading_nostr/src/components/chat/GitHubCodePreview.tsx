@@ -33,7 +33,7 @@ export function GitHubCodePreview({ link }: GitHubCodePreviewProps) {
 				if (link.startLine != null) {
 					const lines = text.split("\n");
 					const start = link.startLine - 1;
-					const end = link.endLine ?? link.startLine;
+					const end = Math.min(link.endLine ?? link.startLine, start + 500);
 					setCode(lines.slice(start, end).join("\n"));
 				} else {
 					setCode(text);
