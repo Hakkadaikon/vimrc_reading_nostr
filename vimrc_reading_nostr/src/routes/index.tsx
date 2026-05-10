@@ -191,7 +191,7 @@ function ChatPage() {
 					const msg = event as NostrMessage;
 					requestProfile(msg.pubkey);
 					enqueueBgEvent(msg);
-				} catch { /* ignore malformed event */ }
+				} catch {}
 			},
 			() => {
 				// EOSE: バッファを即フラッシュしてlocalStorageに保存
@@ -213,7 +213,7 @@ function ChatPage() {
 						content: event.content,
 					});
 				}
-			} catch { /* ignore malformed event */ }
+			} catch {}
 		});
 
 		const deleteUnsub = subscribe([{ kinds: [5] }], (event: Event) => {
@@ -224,7 +224,7 @@ function ChatPage() {
 						deleteMessage(id);
 					}
 				}
-			} catch { /* ignore malformed event */ }
+			} catch {}
 		});
 
 		const metadataUnsub = subscribe(
@@ -235,7 +235,7 @@ function ChatPage() {
 					if (metadata) {
 						setChannelMetadata(metadata, event.created_at);
 					}
-				} catch { /* ignore malformed event */ }
+				} catch {}
 			},
 		);
 

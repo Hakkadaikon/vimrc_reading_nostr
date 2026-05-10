@@ -1,5 +1,6 @@
 import type { EventTemplate } from "nostr-tools/pure";
 import { finalizeEvent } from "nostr-tools/pure";
+import { bytesToHex } from "nostr-tools/utils";
 
 export const DEFAULT_IMAGE_UPLOAD_URL =
 	"https://nostr.build/api/v2/nip96/upload";
@@ -60,9 +61,7 @@ export async function uploadImage(
 
 	const buffer = await file.arrayBuffer();
 	const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
-	const payloadHash = Array.from(new Uint8Array(hashBuffer))
-		.map((b) => b.toString(16).padStart(2, "0"))
-		.join("");
+	const payloadHash = bytesToHex(new Uint8Array(hashBuffer));
 
 	const authTemplate = createNip98AuthEvent(uploadUrl, "POST", payloadHash);
 	const signedAuth = finalizeEvent(authTemplate, secretKey);
@@ -89,7 +88,12 @@ export async function uploadImage(
 		throw new Error("アップロードされた画像のURLを取得できませんでした");
 	}
 
-	if (!url.startsWith("https://")) {
+	try {
+		const parsed = new URL(url);
+		if (parsed.protocol !== "https:") {
+			throw new Error("安全でないURLが返されました");
+		}
+	} catch {
 		throw new Error("安全でないURLが返されました");
 	}
 

@@ -12,6 +12,7 @@ export type NostrMessage = {
 
 const MESSAGE_STORAGE_KEY = "vimrc_reading_nostr_messages";
 export const PAGE_SIZE = 50;
+const MAX_FUTURE_SECONDS = 900;
 
 type MessageState = {
 	messages: NostrMessage[];
@@ -97,7 +98,7 @@ export const useMessageStore = create<MessageState>((set, get) => ({
 
 	addMessage: (event) => {
 		const now = Math.floor(Date.now() / 1000);
-		if (event.created_at > now + 900) return;
+		if (event.created_at > now + MAX_FUTURE_SECONDS) return;
 		set((state) => {
 			if (state.messageIds.has(event.id) || state.deletedIds.has(event.id)) {
 				return state;
@@ -113,7 +114,7 @@ export const useMessageStore = create<MessageState>((set, get) => ({
 
 	addMessages: (events) => {
 		const now = Math.floor(Date.now() / 1000);
-		const maxTime = now + 900;
+		const maxTime = now + MAX_FUTURE_SECONDS;
 		set((state) => {
 			let messages = state.messages;
 			const newIds = new Set(state.messageIds);
