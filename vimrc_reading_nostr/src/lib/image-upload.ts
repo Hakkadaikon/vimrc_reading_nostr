@@ -4,15 +4,23 @@ import { finalizeEvent } from "nostr-tools/pure";
 export const DEFAULT_IMAGE_UPLOAD_URL =
 	"https://nostr.build/api/v2/nip96/upload";
 
-function createNip98AuthEvent(url: string, method: string): EventTemplate {
+function createNip98AuthEvent(
+	url: string,
+	method: string,
+	payloadHash?: string,
+): EventTemplate {
+	const tags: string[][] = [
+		["u", url],
+		["method", method],
+	];
+	if (payloadHash) {
+		tags.push(["payload", payloadHash]);
+	}
 	return {
 		kind: 27235,
 		created_at: Math.floor(Date.now() / 1000),
 		content: "",
-		tags: [
-			["u", url],
-			["method", method],
-		],
+		tags,
 	};
 }
 
@@ -46,7 +54,17 @@ export async function uploadImage(
 	uploadUrl: string,
 	secretKey: Uint8Array,
 ): Promise<string> {
-	const authTemplate = createNip98AuthEvent(uploadUrl, "POST");
+	if (file.size > 10 * 1024 * 1024) {
+		throw new Error("ファイルサイズが10MBを超えています");
+	}
+
+	const buffer = await file.arrayBuffer();
+	const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
+	const payloadHash = Array.from(new Uint8Array(hashBuffer))
+		.map((b) => b.toString(16).padStart(2, "0"))
+		.join("");
+
+	const authTemplate = createNip98AuthEvent(uploadUrl, "POST", payloadHash);
 	const signedAuth = finalizeEvent(authTemplate, secretKey);
 	const token = btoa(JSON.stringify(signedAuth));
 
@@ -69,6 +87,10 @@ export async function uploadImage(
 	const url = extractUrlFromResponse(json);
 	if (!url) {
 		throw new Error("アップロードされた画像のURLを取得できませんでした");
+	}
+
+	if (!url.startsWith("https://")) {
+		throw new Error("安全でないURLが返されました");
 	}
 
 	return url;
