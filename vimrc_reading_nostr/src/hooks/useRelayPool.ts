@@ -54,11 +54,17 @@ function applySubscriptions() {
 	}
 }
 
+const MAX_RECONNECT_ATTEMPTS = 20;
+
 function scheduleReconnect(url: string) {
 	const existing = reconnectTimers.get(url);
 	if (existing) clearTimeout(existing);
 
 	const attempt = attemptCount.get(url) ?? 0;
+	if (attempt >= MAX_RECONNECT_ATTEMPTS) {
+		getSetStatus()(url, "error");
+		return;
+	}
 	const delay = backoffDelay(attempt);
 	attemptCount.set(url, attempt + 1);
 
@@ -77,6 +83,7 @@ async function connectToRelay(url: string) {
 		const connection: RelayConnection = { relay, url };
 		const idx = connections.findIndex((c) => c.url === url);
 		if (idx >= 0) {
+			try { connections[idx].relay.close(); } catch { /* ignore */ }
 			connections[idx] = connection;
 		} else {
 			connections.push(connection);
